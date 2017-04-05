@@ -34,7 +34,7 @@ def obtain_resource(id,filename=None):
 
         #Eliminate _id field
         fields.remove("_id")
-        print(fields)
+        print("The resource has the following fields: {}".format(fields))
         write_to_csv(filename,list_of_dicts,fields)
 
 def main():

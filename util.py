@@ -42,7 +42,7 @@ def pull_and_verify_data(URL, site, failures=0):
         #    "_links": {
         #  "start": "/api/action/datastore_search?limit=5&resource_id=5bbe6c55-bce6-4edb-9d04-68edeb6bf7b1",
         #  "next": "/api/action/datastore_search?offset=5&limit=5&resource_id=5bbe6c55-bce6-4edb-9d04-68edeb6bf7b1"
-        list_of_fields_dicts = results['fields']
+        list_of_fields_dicts = result['fields']
         all_fields = [d['id'] for d in list_of_fields_dicts]
         if r.status_code != 200:
             failures += 1
@@ -51,6 +51,7 @@ def pull_and_verify_data(URL, site, failures=0):
             success = True
     except:
         records = None
+        all_fields = None
         #raise ValueError("Unable to obtain data from CKAN instance.")
     # Information about better ways to handle requests exceptions:
     #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
