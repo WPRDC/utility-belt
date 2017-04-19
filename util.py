@@ -7,6 +7,15 @@ import operator
 import requests
 import time
 import urllib
+import urlparse
+
+def get_site(settings,server):
+    # From the dictionary obtained from ckan_settings.json,
+    # extract the URL for a particular CKAN server and return it.
+    url = settings["URLs"][server]["CKAN"]
+    scheme = urlparse(url).scheme
+    hostname = urlparse(url).hostname
+    return "{}://{}".format(scheme,hostname)
 
 def execute_query(URL,query=None,API_key=None):
     # [ ] If the query might result in a response that is too large or
