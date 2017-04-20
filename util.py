@@ -7,7 +7,9 @@ import operator
 import requests
 import time
 import urllib
-import urlparse
+from urlparse import urlparse
+
+import ckanapi
 
 def get_site(settings,server):
     # From the dictionary obtained from ckan_settings.json,
@@ -38,7 +40,7 @@ def execute_query(URL,query=None,API_key=None):
     if query is not None:
         payload['sql'] = query
     try:
-        print("payload = {}, URL = {}".format(payload,URL))
+        #print("payload = {}, URL = {}".format(payload,URL))
 
         #head['Content-Type'] = 'application/x-www-form-urlencoded'
         #in_dict = urllib.quote(json.dumps(in_dict))
@@ -93,7 +95,7 @@ def get_fields(site,resource_id,API_key):
     try:
         r = execute_query(URL,None,API_key)
         list_of_fields_dicts = r.json()['result']['fields']
-        print(r.json()['result'])
+        #print(r.json()['result'])
         all_fields = [d['id'] for d in list_of_fields_dicts]
         success = True
     except:
@@ -101,6 +103,27 @@ def get_fields(site,resource_id,API_key):
         success = False
 
     return all_fields, success
+
+def get_resource_parameter(site,resource_id,parameter,API_key):
+    # Some resource parameters you can fetch with this function are
+    # 'cache_last_updated', 'package_id', 'webstore_last_updated',
+    # 'datastore_active', 'id', 'size', 'state', 'hash',
+    # 'description', 'format', 'last_modified', 'url_type',
+    # 'mimetype', 'cache_url', 'name', 'created', 'url',
+    # 'webstore_url', 'mimetype_inner', 'position',
+    # 'revision_id', 'resource_type'
+    success = False
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        metadata = ckan.action.resource_show(id=resource_id)
+        desired_string = metadata[parameter]
+        print("The parameter {} for this resource is {}".format(parameter,r.json()['result'][parameter]))
+        success = True
+    except:
+        success = False
+
+    return desired_string, success
+
 
 def get_resource(site,resource_id,chunk_size=500):
     limit = chunk_size
@@ -114,7 +137,7 @@ def get_resource(site,resource_id,chunk_size=500):
     records = [None, None, "Boojum"]
     k = 0
     while len(records) > 0 and failures < 5:
-        time.sleep(2)
+        time.sleep(0.3)
         records, fields, next_URL, success = pull_and_verify_data(URL,site,failures)
         if success:
             if records is not None:
