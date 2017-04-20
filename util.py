@@ -95,7 +95,6 @@ def get_fields(site,resource_id,API_key):
     try:
         r = execute_query(URL,None,API_key)
         list_of_fields_dicts = r.json()['result']['fields']
-        #print(r.json()['result'])
         all_fields = [d['id'] for d in list_of_fields_dicts]
         success = True
     except:
@@ -103,6 +102,17 @@ def get_fields(site,resource_id,API_key):
         success = False
 
     return all_fields, success
+
+def get_fields_ckanapi(site,resource_id,API_key=None):
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        results_dict = ckan.action.datastore_search(resource_id=resource_id,limit=0)
+        schema = results_dict['fields']
+        fields = [d['id'] for d in schema]
+    except:
+        return None, False
+
+    return fields, True
 
 def get_resource_parameter(site,resource_id,parameter,API_key):
     # Some resource parameters you can fetch with this function are
@@ -174,6 +184,7 @@ def retrieve_new_data(self):
         raise ValueError("Unable to obtain data from CKAN instance.")
         # Information about better ways to handle requests exceptions:
         #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
+
 
 
 def to_dict(input_ordered_dict):
