@@ -1,4 +1,4 @@
-import os
+import os, sys
 import re
 import csv
 from collections import OrderedDict
@@ -10,6 +10,8 @@ import urllib
 from urlparse import urlparse
 
 import ckanapi
+
+import traceback
 
 def get_site(settings,server):
     # From the dictionary obtained from ckan_settings.json,
@@ -186,6 +188,40 @@ def retrieve_new_data(self):
         #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
 
 
+def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API_key):
+    success = False
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        original_values = [get_resource_parameter(site,resource_id,p,API_key)[0] for p in parameters]
+        payload = {}
+        payload['id'] = resource_id
+        for parameter,new_value in zip(parameters,new_values):
+            payload[parameter] = new_value
+        #For example,
+        #   results = ckan.action.resource_patch(id=resource_id, url='#', url_type='')
+        results = ckan.action.resource_patch(**payload)
+        print(results)
+        print("Changed the parameters {} from {} to {} on resource {}".format(parameters, original_values, new_values, resource_id))
+        success = True
+    except:
+        success = False
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        print("Error: {}".format(exc_type))
+        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        print(''.join('!!! ' + line for line in lines))
+
+    return success
+
+def disable_downloading(site,resource_id,API_key=None):
+    # Under CKAN, if the user tries to download a huge table,
+    # CKAN tries to generate a CSV (storing all the data in
+    # memory), exhausts the server's memory supplies, and
+    # causes the server to crash.
+
+    # As part of a temporary workaround, we use this function
+    # to change the URL parameter from a link that triggers a
+    # dump from the datastore to a "#" symbol.
+    return set_resource_parameters_to_values(site,resource_id,['url','url_type'],['#',''],API_key)
 
 def to_dict(input_ordered_dict):
     return loads(dumps(input_ordered_dict))
