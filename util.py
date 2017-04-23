@@ -90,22 +90,7 @@ def pull_and_verify_data(URL, site, failures=0):
 
     return records, all_fields, URL, success
 
-def get_fields(site,resource_id,API_key):
-    success = False
-    all_fields = None
-    URL = "{}/api/action/datastore_search?resource_id={}&limit=0".format(site, resource_id)
-    try:
-        r = execute_query(URL,None,API_key)
-        list_of_fields_dicts = r.json()['result']['fields']
-        all_fields = [d['id'] for d in list_of_fields_dicts]
-        success = True
-    except:
-        print(r.status_code)
-        success = False
-
-    return all_fields, success
-
-def get_fields_ckanapi(site,resource_id,API_key=None):
+def get_fields(site,resource_id,API_key=None):
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
         results_dict = ckan.action.datastore_search(resource_id=resource_id,limit=0)
