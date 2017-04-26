@@ -3,15 +3,40 @@ import re
 import csv
 from collections import OrderedDict
 from json import loads, dumps
+import json
 import operator
 import requests
 import time
 import urllib
 from urlparse import urlparse
 
+from datapusher import Datapusher
+
 import ckanapi
 
 import traceback
+
+def initialize_datastore(resource_id, ordered_fields, keys=None, settings_file='ckan_settings.json', server='Live'):
+    # For a CKAN resource that already exists (identified by resource_id)
+    # on a CKAN instance specified by the settings in the JSON
+    # settings_file and the specified server, reset the datastore
+    # (deleting all stored data) and create a new datastore with the
+    # field given by ordered_fields (giving the order, names, and types
+    # of the fields). The primary key or keys are given in the keys
+    # argument.
+    with open(settings_file) as f:
+        settings = json.load(f)
+    dp = Datapusher(settings, server=server)
+    dp.delete_datastore(resource_id)
+    # Example of ordered_fields and keys:
+    #ordered_fields = [{"id": "Zone", "type": "text"}]
+    #ordered_fields.append({"id": "Start", "type": "timestamp"})
+    #ordered_fields.append({"id": "End", "type": "timestamp"})
+    #keys = ["Zone", "UTC Start"]
+
+    call_result = dp.create_datastore(resource_id, ordered_fields, keys=keys)
+    print("Datastore creation result: {}".format(call_result))
+    return call_result
 
 def get_site(settings,server):
     # From the dictionary obtained from ckan_settings.json,
