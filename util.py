@@ -139,7 +139,7 @@ def get_resource_parameter(site,resource_id,parameter,API_key):
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
         metadata = ckan.action.resource_show(id=resource_id)
         desired_string = metadata[parameter]
-        print("The parameter {} for this resource is {}".format(parameter,r.json()['result'][parameter]))
+        print("The parameter {} for this resource is {}".format(parameter,metadata[parameter]))
         success = True
     except:
         success = False
