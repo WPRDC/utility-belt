@@ -128,7 +128,7 @@ def get_fields(site,resource_id,API_key=None):
 
     return fields, True
 
-def get_package_parameter(site,package_id,parameter,API_key):
+def get_package_parameter(site,package_id,parameter,API_key=None):
     # Some package parameters you can fetch from the WPRDC with 
     # this function are:
     # 'geographic_unit', 'owner_org', 'maintainer', 'data_steward_email', 
@@ -154,7 +154,7 @@ def get_package_parameter(site,package_id,parameter,API_key):
 
     return desired_string, success
 
-def get_resource_parameter(site,resource_id,parameter,API_key):
+def get_resource_parameter(site,resource_id,parameter,API_key=None):
     # Some resource parameters you can fetch with this function are
     # 'cache_last_updated', 'package_id', 'webstore_last_updated',
     # 'datastore_active', 'id', 'size', 'state', 'hash',
@@ -174,17 +174,17 @@ def get_resource_parameter(site,resource_id,parameter,API_key):
 
     return desired_string, success
 
-def get_resource_name(site,resource_id,API_key):
+def get_resource_name(site,resource_id,API_key=None):
     return get_resource_parameter(site,resource_id,'name',API_key)
 
-def get_package_name_from_resource_id(site,resource_id,API_key):
+def get_package_name_from_resource_id(site,resource_id,API_key=None):
     p_id, success = get_resource_parameter(site,resource_id,'package_id',API_key)
     if success:
         return get_package_parameter(site,p_id,'title',API_key)
     else:
         return None, False
 
-def query_resource(site,query,API_key):
+def query_resource(site,query,API_key=None):
     # Use the datastore_search_sql API endpoint to query a CKAN resource.
     success = False
     try:
@@ -218,7 +218,7 @@ def query_resource(site,query,API_key):
         return None, False
     return data, success
 
-def get_resource_data(site,resource_id,API_key,count=50):
+def get_resource_data(site,resource_id,API_key=None,count=50):
     # Use the datastore_search API endpoint to get <count> records from 
     # a CKAN resource
     success = False
