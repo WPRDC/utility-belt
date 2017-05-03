@@ -126,6 +126,32 @@ def get_fields(site,resource_id,API_key=None):
 
     return fields, True
 
+def get_package_parameter(site,package_id,parameter,API_key):
+    # Some package parameters you can fetch from the WPRDC with 
+    # this function are:
+    # 'geographic_unit', 'owner_org', 'maintainer', 'data_steward_email', 
+    # 'relationships_as_object', 'access_level_comment', 
+    # 'frequency_publishing', 'maintainer_email', 'num_tags', 'id', 
+    # 'metadata_created', 'group', 'metadata_modified', 'author', 
+    # 'author_email', 'state', 'version', 'department', 'license_id', 
+    # 'type', 'resources', 'num_resources', 'data_steward_name', 'tags', 
+    # 'title', 'frequency_data_change', 'private', 'groups', 
+    # 'creator_user_id', 'relationships_as_subject', 'data_notes', 
+    # 'name', 'isopen', 'url', 'notes', 'license_title', 
+    # 'temporal_coverage', 'related_documents', 'license_url', 
+    # 'organization', 'revision_id'
+    success = False
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        metadata = ckan.action.package_show(id=package_id)
+        desired_string = metadata[parameter]
+        #print("The parameter {} for this package is {}".format(parameter,metadata[parameter]))
+        success = True
+    except:
+        success = False
+
+    return desired_string, success
+
 def get_resource_parameter(site,resource_id,parameter,API_key):
     # Some resource parameters you can fetch with this function are
     # 'cache_last_updated', 'package_id', 'webstore_last_updated',
@@ -139,13 +165,22 @@ def get_resource_parameter(site,resource_id,parameter,API_key):
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
         metadata = ckan.action.resource_show(id=resource_id)
         desired_string = metadata[parameter]
-        print("The parameter {} for this resource is {}".format(parameter,metadata[parameter]))
+        #print("The parameter {} for this resource is {}".format(parameter,metadata[parameter]))
         success = True
     except:
         success = False
 
     return desired_string, success
 
+def get_resource_name(site,resource_id,API_key):
+    return get_resource_parameter(site,resource_id,'name',API_key)
+
+def get_package_name_from_resource_id(site,resource_id,API_key):
+    p_id, success = get_resource_parameter(site,resource_id,'package_id',API_key)
+    if success:
+        return get_package_parameter(site,p_id,'title',API_key)
+    else:
+        return None, False
 
 def get_resource(site,resource_id,chunk_size=500):
     limit = chunk_size
