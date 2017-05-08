@@ -1,3 +1,4 @@
 *.csv
 *.pyc
 ckan_settings.json
+staging/
