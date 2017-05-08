@@ -117,6 +117,24 @@ def pull_and_verify_data(URL, site, failures=0):
 
     return records, all_fields, URL, success
 
+def get_number_of_rows(site,resource_id,API_key=None):
+# This is pretty similar to get_fields and DRYer code might take
+# advantage of that.
+
+# On other/later versions of CKAN it would make sense to use 
+# the datastore_info API endpoint here, but that endpoint is
+# broken on WPRDC.org.
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        results_dict = ckan.action.datastore_search(resource_id=resource_id,limit=1) # The limit
+        # must be greater than zero for this query to get the 'total' field to appear in
+        # the API response.
+        count = results_dict['total']
+    except:
+        return None, False
+
+    return count, True
+
 def get_fields(site,resource_id,API_key=None):
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
@@ -162,6 +180,8 @@ def get_resource_parameter(site,resource_id,parameter,API_key=None):
     # 'mimetype', 'cache_url', 'name', 'created', 'url',
     # 'webstore_url', 'mimetype_inner', 'position',
     # 'revision_id', 'resource_type'
+    # Note that 'size' does not seem to be defined for tabular 
+    # data on WPRDC.org. (It's not the number of rows in the resource.)
     success = False
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
@@ -303,6 +323,16 @@ def retrieve_new_data(self):
         # Information about better ways to handle requests exceptions:
         #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
 
+#def elicit_primary_key(site,resource_id,API_key):
+#    success = False
+#    try:
+#        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+#        # Get the very last row of the resource.
+#        row_count = get_number_of_rows(site,resource_id,API_key)
+#        records, worked = get_resource_data(site,resource_id,API_key,count=1)
+#        first_row = records[0]
+#        # Try to insert it into the database
+#        results = ckan.action.datastore_upsert(
 
 def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API_key):
     success = False
