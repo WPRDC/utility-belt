@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys
+import sys, os
 import pprint
 import json
 
@@ -40,12 +40,13 @@ def obtain_resource(site,r_id,API_key,filename=None):
         return True
 
 def main():
+    path = os.path.dirname(os.path.realpath(__file__))
     resource_id = sys.argv[1]
     filename = None
     if len(sys.argv) > 2:
         filename = sys.argv[2]
     server = "Live"
-    with open('ckan_settings.json') as f:
+    with open(path+'/ckan_settings.json') as f:
         settings = json.load(f)
         API_key = settings["API Keys"][server]
         site = get_site(settings,server)
