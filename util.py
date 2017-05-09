@@ -121,7 +121,7 @@ def get_number_of_rows(site,resource_id,API_key=None):
 # This is pretty similar to get_fields and DRYer code might take
 # advantage of that.
 
-# On other/later versions of CKAN it would make sense to use 
+# On other/later versions of CKAN it would make sense to use
 # the datastore_info API endpoint here, but that endpoint is
 # broken on WPRDC.org.
     try:
@@ -147,18 +147,18 @@ def get_fields(site,resource_id,API_key=None):
     return fields, True
 
 def get_package_parameter(site,package_id,parameter,API_key=None):
-    # Some package parameters you can fetch from the WPRDC with 
+    # Some package parameters you can fetch from the WPRDC with
     # this function are:
-    # 'geographic_unit', 'owner_org', 'maintainer', 'data_steward_email', 
-    # 'relationships_as_object', 'access_level_comment', 
-    # 'frequency_publishing', 'maintainer_email', 'num_tags', 'id', 
-    # 'metadata_created', 'group', 'metadata_modified', 'author', 
-    # 'author_email', 'state', 'version', 'department', 'license_id', 
-    # 'type', 'resources', 'num_resources', 'data_steward_name', 'tags', 
-    # 'title', 'frequency_data_change', 'private', 'groups', 
-    # 'creator_user_id', 'relationships_as_subject', 'data_notes', 
-    # 'name', 'isopen', 'url', 'notes', 'license_title', 
-    # 'temporal_coverage', 'related_documents', 'license_url', 
+    # 'geographic_unit', 'owner_org', 'maintainer', 'data_steward_email',
+    # 'relationships_as_object', 'access_level_comment',
+    # 'frequency_publishing', 'maintainer_email', 'num_tags', 'id',
+    # 'metadata_created', 'group', 'metadata_modified', 'author',
+    # 'author_email', 'state', 'version', 'department', 'license_id',
+    # 'type', 'resources', 'num_resources', 'data_steward_name', 'tags',
+    # 'title', 'frequency_data_change', 'private', 'groups',
+    # 'creator_user_id', 'relationships_as_subject', 'data_notes',
+    # 'name', 'isopen', 'url', 'notes', 'license_title',
+    # 'temporal_coverage', 'related_documents', 'license_url',
     # 'organization', 'revision_id'
     success = False
     try:
@@ -180,7 +180,7 @@ def get_resource_parameter(site,resource_id,parameter,API_key=None):
     # 'mimetype', 'cache_url', 'name', 'created', 'url',
     # 'webstore_url', 'mimetype_inner', 'position',
     # 'revision_id', 'resource_type'
-    # Note that 'size' does not seem to be defined for tabular 
+    # Note that 'size' does not seem to be defined for tabular
     # data on WPRDC.org. (It's not the number of rows in the resource.)
     success = False
     try:
@@ -238,13 +238,13 @@ def query_resource(site,query,API_key=None):
         return None, False
     return data, success
 
-def get_resource_data(site,resource_id,API_key=None,count=50):
-    # Use the datastore_search API endpoint to get <count> records from 
+def get_resource_data(site,resource_id,API_key=None,count=50,offset=0):
+    # Use the datastore_search API endpoint to get <count> records from
     # a CKAN resource
     success = False
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        response = ckan.action.datastore_search(id=resource_id, limit=count)
+        response = ckan.action.datastore_search(id=resource_id, limit=count, offset=offset)
         # A typical response is a dictionary like this
         #{u'_links': {u'next': u'/api/action/datastore_search?offset=3',
         #             u'start': u'/api/action/datastore_search'},
@@ -267,13 +267,39 @@ def get_resource_data(site,resource_id,API_key=None,count=50):
         #               u'total_amount': 3233.59}],
         # u'resource_id': u'd1e80180-5b2e-4dab-8ec3-be621628649e',
         # u'total': 88232}
+        pprint.pprint(response)
         data = response['records']
         success = True
     except:
         return None, False
     return data, success
 
+def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
+    all_records = []
+    failures = 0
+    records = [None, None, "Boojum"]
+    k = 0
+    offset = 0 # offset is almost k*chunk_size (but not quite)
+    while len(records) > 0 and failures < 5:
+        time.sleep(0.1)
+        records, success = get_resource_data(site,resource_id,API_key,chunk_size,offset)
+
+        if success:
+            if records is not None:
+                all_records += records
+            failures = 0
+            offset += chunk_size
+        else:
+            failures += 1
+        k += 1
+        print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records),len(all_records)))
+
+    return all_records, success
+
+
 def get_resource(site,resource_id,chunk_size=500):
+    # Phasing this one out to be replaced by get_all_records
+    # since the latter supports private repositories.
     limit = chunk_size
     URL_template = "{}/api/3/action/datastore_search?resource_id={}&limit={}"
 
