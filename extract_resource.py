@@ -26,7 +26,7 @@ def obtain_resource(id,filename=None):
     if filename is None:
         filename = "{}.csv".format(id)
 
-    list_of_dicts, fields, success = get_resource(DEFAULT_CKAN_INSTANCE,id,chunk_size=1000)
+    list_of_dicts, fields, success = get_resource(DEFAULT_CKAN_INSTANCE,id,chunk_size=5000)
 
     if not success:
         print("Something went wrong and the resource was not obtained.")
