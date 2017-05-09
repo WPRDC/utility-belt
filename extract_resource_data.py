@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 import sys
-import requests
 import pprint
+import json
 
-from collections import OrderedDict, defaultdict
-import re
-from util import write_to_csv, get_resource
+from util import write_to_csv, get_all_records, get_site, get_fields
 
-DEFAULT_CKAN_INSTANCE = 'https://data.wprdc.org'
-
-def obtain_resource(id,filename=None):
+def obtain_resource(site,r_id,API_key,filename=None):
     # This function pulls information from a particular resource on a
     # CKAN instance and outputs it to a CSV file.
 
@@ -18,17 +14,21 @@ def obtain_resource(id,filename=None):
     # interface: 1) the row order is different (this version is ordered
     # by _id (logically) while the downloaded version has the same weird
     # order as that shown in the Data Explorer (which can have an _id
-    # sequence like 1,2,3,4,5,6,7,45,8,9,10... for no obvious reason)
+    # sequence like 1,2,3,4,5,6,7,45,8,9,10... for no obvious reason
+    # (it may be that the data is being sorted by the order they appear
+    # in the database, which may be by their time of last update...))
     # and 2) weird non-ASCII characters are not being handled optimally,
     # so probably some work on character encoding is in order in the
     # Python script.
 
     if filename is None:
-        filename = "{}.csv".format(id)
+        filename = "{}.csv".format(r_id)
 
-    list_of_dicts, fields, success = get_resource(DEFAULT_CKAN_INSTANCE,id,chunk_size=5000)
+    list_of_dicts, success1 = get_all_records(site, r_id, API_key, chunk_size=5000)
+    fields, success2 = get_fields(site,r_id,API_key)
 
-    if not success:
+
+    if not success1 or not success2:
         print("Something went wrong and the resource was not obtained.")
     else:
 
@@ -42,7 +42,13 @@ def main():
     filename = None
     if len(sys.argv) > 2:
         filename = sys.argv[2]
-    obtain_resource(resource_id,filename)
+    server = "Live"
+    with open('ckan_settings.json') as f:
+        settings = json.load(f)
+        API_key = settings["API Keys"][server]
+        site = get_site(settings,server)
+
+    obtain_resource(site,resource_id,API_key,filename)
 
 ############
 
