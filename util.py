@@ -285,7 +285,7 @@ def get_resource(site,resource_id,chunk_size=500):
     records = [None, None, "Boojum"]
     k = 0
     while len(records) > 0 and failures < 5:
-        time.sleep(0.3)
+        time.sleep(0.1)
         records, fields, next_URL, success = pull_and_verify_data(URL,site,failures)
         if success:
             if records is not None:
@@ -357,6 +357,21 @@ def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API
         print(''.join('!!! ' + line for line in lines))
 
     return success
+
+def delete_row_from_resource(site,resource_id,_id,API_key):
+    success = False
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        response = ckan.action.datastore_delete(id=resource_id, filters={"_id":_id}, force=True)
+        success = True
+    except:
+        success = False
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        print("Error: {}".format(exc_type))
+        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        print(''.join('!!! ' + line for line in lines))
+    return success
+
 
 def disable_downloading(site,resource_id,API_key=None):
     # Under CKAN, if the user tries to download a huge table,
