@@ -267,7 +267,6 @@ def get_resource_data(site,resource_id,API_key=None,count=50,offset=0):
         #               u'total_amount': 3233.59}],
         # u'resource_id': u'd1e80180-5b2e-4dab-8ec3-be621628649e',
         # u'total': 88232}
-        pprint.pprint(response)
         data = response['records']
         success = True
     except:
