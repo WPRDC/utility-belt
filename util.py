@@ -277,13 +277,16 @@ def get_resource_data(site,resource_id,API_key=None,count=50,offset=0):
 def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
     all_records = []
     failures = 0
-    records = [None, None, "Boojum"]
     k = 0
     offset = 0 # offset is almost k*chunk_size (but not quite)
-    while len(records) > 0 and failures < 5:
+    row_count, _ = get_number_of_rows(site,resource_id,API_key)
+    while len(all_records) < row_count and failures < 5:
         time.sleep(0.1)
         records, success = get_resource_data(site,resource_id,API_key,chunk_size,offset)
 
+        # If the number of rows is a moving target, incorporate
+        # this step:
+        #row_count, success2 = get_number_of_rows(site,resource_id,API_key)
         if success:
             if records is not None:
                 all_records += records
