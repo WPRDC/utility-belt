@@ -30,12 +30,14 @@ def obtain_resource(site,r_id,API_key,filename=None):
 
     if not success1 or not success2:
         print("Something went wrong and the resource was not obtained.")
+        return False
     else:
 
         #Eliminate _id field
         fields.remove("_id")
         print("The resource has the following fields: {}".format(fields))
         write_to_csv(filename,list_of_dicts,fields)
+        return True
 
 def main():
     resource_id = sys.argv[1]
@@ -48,7 +50,7 @@ def main():
         API_key = settings["API Keys"][server]
         site = get_site(settings,server)
 
-    obtain_resource(site,resource_id,API_key,filename)
+    success = obtain_resource(site,resource_id,API_key,filename)
 
 ############
 
