@@ -15,6 +15,7 @@ import pprint
 from datapusher import Datapusher
 
 import ckanapi
+#from ckanapi import ValidationError
 
 import traceback
 
@@ -351,16 +352,64 @@ def retrieve_new_data(self):
         # Information about better ways to handle requests exceptions:
         #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
 
-#def elicit_primary_key(site,resource_id,API_key):
-#    success = False
-#    try:
-#        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-#        # Get the very last row of the resource.
-#        row_count = get_number_of_rows(site,resource_id,API_key)
-#        records, worked = get_resource_data(site,resource_id,API_key,count=1)
-#        first_row = records[0]
-#        # Try to insert it into the database
-#        results = ckan.action.datastore_upsert(
+def elicit_primary_key(site,resource_id,API_key):
+    # This function uses a workaround to determine the primary keys of a resource
+    # from a CKAN API call. 
+
+    # Note that it has not been tested on primary-key-less resources and this represents
+    # kind of a problem because, if used on such a resource, it will succeed in adding 
+    # the duplicate row to the table.
+    success = False
+    primary_keys = None
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        # Get the very last row of the resource.
+        row_count,_ = get_number_of_rows(site,resource_id,API_key)
+        records, worked = get_resource_data(site,resource_id,API_key,count=1)
+        first_row = records[0]
+        # Try to insert it into the database
+        del first_row["_id"]
+        results = ckan.action.datastore_upsert(resource_id=resource_id, method='insert', 
+            records=[first_row], force=True)
+        pprint.pprint(results)
+        success = True
+    except ckanapi.ValidationError as exception:
+        orig = exception.error_dict['info']['orig']
+        print(orig)
+        details = orig.split('\n')[1]
+
+        string_of_keys = re.sub(r'\)=\(.*', '', re.sub(r'DETAIL:  Key \(','',details))
+        primary_keys = string_of_keys.split(', ')
+    except:
+        success = False
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        print("Error: {}".format(exc_type))
+        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        print(''.join('!!! ' + line for line in lines))
+    else:
+        new_row_count,_ = get_number_of_rows(site,resource_id,API_key)
+        records,_ = get_resource_data(site,resource_id,API_key,count=1,offset=new_row_count-1)
+        last_row = records[0]
+        value_of_id = int(last_row['_id'])
+        print("This function was run on a resource that has no primary key",
+            "and therefore added a duplicate row that was never intended to be added.",
+            "The correct thing to do here is to delete", 
+            "row with _id = {}".format(value_of_id))
+        if new_row_count == row_count+1:
+            # Delete the last row (if it matches the one that was just added):
+            del last_row['_id']
+            if last_row == first_row:
+                print("Deleting the last row...")
+                deleted = delete_row_from_resource(site,resource_id,value_of_id,API_key)
+            else:
+                print("The last row doesn't match the added row, even though the number of rows",
+                    "has increased")
+
+
+        primary_keys = []
+
+
+    return primary_keys, success
 
 def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API_key):
     success = False
