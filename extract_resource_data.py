@@ -3,7 +3,7 @@ import sys, os
 import pprint
 import json
 
-from util import write_to_csv, get_all_records, get_site, get_fields
+from util import write_to_csv, get_all_records, get_site, get_fields, get_metadata
 
 def obtain_resource(site,r_id,API_key,filename=None):
     # This function pulls information from a particular resource on a
@@ -26,10 +26,10 @@ def obtain_resource(site,r_id,API_key,filename=None):
 
     list_of_dicts, success1 = get_all_records(site, r_id, API_key, chunk_size=5000)
     fields, success2 = get_fields(site,r_id,API_key)
+    metadata, success3 = get_metadata(site,r_id,API_key)
 
-
-    if not success1 or not success2:
-        print("Something went wrong and the resource was not obtained.")
+    if not success1 or not success2 or not success3:
+        print("Something went wrong and the resource/fields/metadata was not obtained.")
         return False
     else:
 
@@ -37,6 +37,10 @@ def obtain_resource(site,r_id,API_key,filename=None):
         fields.remove("_id")
         print("The resource has the following fields: {}".format(fields))
         write_to_csv(filename,list_of_dicts,fields)
+        metaname = filename + '-metadata.json'
+        with open(metaname, 'w') as outfile:
+            json.dump(metadata, outfile, indent=4, sort_keys=True)
+
         return True
 
 def main():

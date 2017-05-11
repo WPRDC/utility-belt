@@ -170,6 +170,8 @@ def get_number_of_rows(site,resource_id,API_key=None):
     return count, True
 
 def get_fields(site,resource_id,API_key=None):
+    # In principle, it should be possible to do this using the datastore_info 
+    # endpoint instead and taking the 'schema' part of the result.
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
         results_dict = ckan.action.datastore_search(resource_id=resource_id,limit=0)
@@ -181,6 +183,8 @@ def get_fields(site,resource_id,API_key=None):
     return fields, True
 
 def get_schema(site,resource_id,API_key=None):
+    # In principle, it should be possible to do this using the datastore_info 
+    # endpoint instead and taking the 'schema' part of the result.
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
         results_dict = ckan.action.datastore_search(resource_id=resource_id,limit=0)
@@ -189,6 +193,15 @@ def get_schema(site,resource_id,API_key=None):
         return None, False
 
     return schema, True
+
+def get_metadata(site,resource_id,API_key=None):
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        metadata = ckan.action.resource_show(id=resource_id)
+    except:
+        return None, False
+
+    return metadata, True
 
 def get_package_parameter(site,package_id,parameter,API_key=None):
     # Some package parameters you can fetch from the WPRDC with
