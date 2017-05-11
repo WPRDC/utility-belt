@@ -180,6 +180,16 @@ def get_fields(site,resource_id,API_key=None):
 
     return fields, True
 
+def get_schema(site,resource_id,API_key=None):
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        results_dict = ckan.action.datastore_search(resource_id=resource_id,limit=0)
+        schema = results_dict['fields']
+    except:
+        return None, False
+
+    return schema, True
+
 def get_package_parameter(site,package_id,parameter,API_key=None):
     # Some package parameters you can fetch from the WPRDC with
     # this function are:
