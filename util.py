@@ -52,6 +52,18 @@ def query_yes_no(question, default="yes"):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
+def dealias(site,pseudonym):
+    # If a resource ID is an alias for the real resource ID, this function will
+    # convert the pseudonym into the real resource ID and return it.
+    ckan = ckanapi.RemoteCKAN(site)
+    aliases = ckan.action.datastore_search(id='_table_metadata',filters={'name': pseudonym})
+    resource_id = aliases['records'][0]['alias_of']
+    return resource_id
+
+# [ ] Eventually write a wrapper around resource_show (and maybe any resource endpoint
+# that tries the action, and if it fails, tries to dealias the resource ID and tries it 
+# again. 
+
 def initialize_datastore(resource_id, ordered_fields, keys=None, settings_file='ckan_settings.json', server='Live'):
     # For a CKAN resource that already exists (identified by resource_id)
     # on a CKAN instance specified by the settings in the JSON
