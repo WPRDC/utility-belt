@@ -337,6 +337,9 @@ def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
     k = 0
     offset = 0 # offset is almost k*chunk_size (but not quite)
     row_count, _ = get_number_of_rows(site,resource_id,API_key)
+    if row_count == 0: # or if the datastore is not active
+       print("No data found in the datastore.")
+       success = False
     while len(all_records) < row_count and failures < 5:
         time.sleep(0.1)
         records, success = get_resource_data(site,resource_id,API_key,chunk_size,offset)
@@ -491,6 +494,32 @@ def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API
         print(''.join('!!! ' + line for line in lines))
 
     return success
+
+# Comment out this function since it's not working as intended yet.
+#def recast_field(site,resource_id,field,new_type,API_key):
+#    # Experiments suggest that this function can be used to convert an integer field
+#    # to a string field (text), but that if you try to convert back, the string 
+#    # values in that field do not get converted back to integers (though the field
+#    # itself does appear to have type numeric.
+#
+#    # Perhaps a proper recasting function would need to iterate through the data
+#    # and fix the types (or possibly download everything, reset the datastore, and
+#    # then upload it all with the proper types).
+#
+#    schema, _ = get_schema(site,resource_id,API_key)
+#    if schema[0]['id'] == '_id':
+#        new_schema = schema[1:]
+#        for d in new_schema:
+#            if d['id'] == field:
+#                d['type'] == new_type
+#        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+#        outcome = ckan.action.datastore_create(resource_id=resource_id,fields=new_schema, force=True)
+#        print("Verifying that the schema has changed...")
+#        final_schema, worked = get_schema(site,resource_id,API_key)
+#        return final_schema, True
+#    else:
+#        print("Unable to eliminate the _id field from this schema")
+#        return schema, False
 
 def delete_row_from_resource(site,resource_id,_id,API_key):
     success = False
