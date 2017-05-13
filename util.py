@@ -60,9 +60,23 @@ def dealias(site,pseudonym):
     resource_id = aliases['records'][0]['alias_of']
     return resource_id
 
-# [ ] Eventually write a wrapper around resource_show (and maybe any resource endpoint
-# that tries the action, and if it fails, tries to dealias the resource ID and tries it 
-# again. 
+
+def resource_show(ckan,resource_id):
+    # A wrapper around resource_show (which could be expanded to any resource endpoint)
+    # that tries the action, and if it fails, tries to dealias the resource ID and tries 
+    # the action again.
+    try:
+        metadata = ckan.action.resource_show(id=resource_id)
+    except ckanapi.errors.NotFound:
+        # Maybe the resource_id is an alias for the real one.
+        real_id = dealias(site,resource_id)
+        metadata = ckan.action.resource_show(id=real_id)
+    except:
+        msg = "{} was not found on that CKAN instance".format(resource_id))
+        print(msg)
+        raise ckanapi.errors.NotFound(msg)
+    
+    return metadata
 
 def initialize_datastore(resource_id, ordered_fields, keys=None, settings_file='ckan_settings.json', server='Live'):
     # For a CKAN resource that already exists (identified by resource_id)
@@ -209,7 +223,7 @@ def get_schema(site,resource_id,API_key=None):
 def get_metadata(site,resource_id,API_key=None):
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        metadata = ckan.action.resource_show(id=resource_id)
+        metadata = resource_show(ckan,resource_id)
     except:
         return None, False
 
@@ -254,7 +268,7 @@ def get_resource_parameter(site,resource_id,parameter,API_key=None):
     success = False
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        metadata = ckan.action.resource_show(id=resource_id)
+        metadata = resource_show(ckan,resource_id)
         desired_string = metadata[parameter]
 
         #print("The parameter {} for this resource is {}".format(parameter,metadata[parameter]))
