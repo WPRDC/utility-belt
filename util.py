@@ -72,7 +72,7 @@ def resource_show(ckan,resource_id):
         real_id = dealias(site,resource_id)
         metadata = ckan.action.resource_show(id=real_id)
     except:
-        msg = "{} was not found on that CKAN instance".format(resource_id))
+        msg = "{} was not found on that CKAN instance".format(resource_id)
         print(msg)
         raise ckanapi.errors.NotFound(msg)
     
