@@ -1,5 +1,5 @@
 import csv, json
-from util import get_fields, get_resource_name, get_site, query_resource, get_resource_data
+from gadgets import get_fields, get_resource_name, get_site, query_resource, get_resource_data
 import pprint
 
 

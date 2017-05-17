@@ -3,7 +3,7 @@ import sys, os
 import pprint
 import json
 
-from util import write_to_csv, get_all_records, get_site, get_fields, get_metadata
+from gadgets import write_to_csv, get_all_records, get_site, get_fields, get_metadata
 
 def obtain_resource(site,r_id,API_key,filename=None):
     # This function pulls information from a particular resource on a

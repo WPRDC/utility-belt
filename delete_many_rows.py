@@ -1,7 +1,7 @@
 import csv, json, time, sys
 #from collections import OrderedDict
 from push_to_CKAN_resource import push_data_to_ckan, DEFAULT_CKAN_INSTANCE
-from util import get_site, get_resource_name, get_number_of_rows, delete_row_from_resource, query_yes_no
+from gadgets import get_site, get_resource_name, get_number_of_rows, delete_row_from_resource, query_yes_no
 
 server = "Live"
 resource_id = "4a984000-6ddb-4c77-a628-7e979ce3c6d3" # HyperB

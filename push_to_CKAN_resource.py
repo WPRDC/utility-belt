@@ -4,7 +4,7 @@ import sys, json
 
 from collections import OrderedDict, defaultdict
 import re, os
-from util import get_site
+from gadgets import get_site
 
 DEFAULT_CKAN_INSTANCE = 'https://data.wprdc.org'
 
