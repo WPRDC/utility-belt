@@ -274,6 +274,7 @@ def get_resource_parameter(site,resource_id,parameter,API_key=None):
         #print("The parameter {} for this resource is {}".format(parameter,metadata[parameter]))
         success = True
     except:
+        desired_string = None
         success = False
 
     return desired_string, success
@@ -466,6 +467,17 @@ def elicit_primary_key(site,resource_id,API_key):
 
         string_of_keys = re.sub(r'\)=\(.*', '', re.sub(r'DETAIL:  Key \(','',details))
         primary_keys = string_of_keys.split(', ')
+
+        # The above works if the keys are lowercased and have no spaces.
+        # Otherwise, it seems that they are returned like this:
+        # [u'"Key Number 1"', u'"Another Key that is Primary"']
+        # so some extra processing is required.
+        revised_primary_keys = []
+        for pk in primary_keys: 
+            if pk[0] == u'"' and pk[-1] == u'"':
+                pk = pk[1:-1]
+            revised_primary_keys.append(pk)
+        primary_keys = revised_primary_keys
     except:
         success = False
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -477,10 +489,12 @@ def elicit_primary_key(site,resource_id,API_key):
         records,_ = get_resource_data(site,resource_id,API_key,count=1,offset=new_row_count-1)
         last_row = records[0]
         value_of_id = int(last_row['_id'])
-        print("This function was run on a resource that has no primary key",
-            "and therefore added a duplicate row that was never intended to be added.",
-            "The correct thing to do here is to delete", 
-            "row with _id = {}".format(value_of_id))
+        msg = "This function was run on a resource that has no primary key"
+        msg += " and therefore added a duplicate row that was never intended to be added."
+        msg += " The correct thing to do here is to delete"  
+        msg += "row with _id = {}".format(value_of_id)
+        print(msg)
+        
         if new_row_count == row_count+1:
             # Delete the last row (if it matches the one that was just added):
             del last_row['_id']
