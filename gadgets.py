@@ -289,6 +289,14 @@ def get_package_name_from_resource_id(site,resource_id,API_key=None):
     else:
         return None, False
 
+def find_resource_id(site,package_id,resource_name,API_key=None):
+    resources, success = get_package_parameter(site,package_id,'resources',API_key)
+    if success:
+        for r in resources:
+            if r['name'] == resource_name:
+                return r['id'], True
+    return None, False
+
 def query_resource(site,query,API_key=None):
     # Use the datastore_search_sql API endpoint to query a CKAN resource.
     success = False
@@ -505,9 +513,7 @@ def elicit_primary_key(site,resource_id,API_key):
                 print("The last row doesn't match the added row, even though the number of rows",
                     "has increased")
 
-
         primary_keys = []
-
 
     return primary_keys, success
 
