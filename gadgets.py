@@ -8,7 +8,10 @@ import operator
 import requests
 import time
 import urllib
-from urlparse import urlparse
+try:
+    from urlparse import urlparse # Python 2
+except:
+    from urllib.parse import urlparse # Python 3 renamed urlparse.
 
 import pprint
 
