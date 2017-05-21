@@ -15,7 +15,10 @@ except:
 
 import pprint
 
-from datapusher import Datapusher
+try:
+    import datapusher
+except:
+    from . import datapusher # Python 3/prime_ckan workaround
 
 import ckanapi
 #from ckanapi import ValidationError
@@ -91,7 +94,7 @@ def initialize_datastore(resource_id, ordered_fields, keys=None, settings_file='
     # argument.
     with open(settings_file) as f:
         settings = json.load(f)
-    dp = Datapusher(settings, server=server)
+    dp = datapusher.Datapusher(settings, server=server)
     dp.delete_datastore(resource_id)
     # Example of ordered_fields and keys:
     #ordered_fields = [{"id": "Zone", "type": "text"}]
