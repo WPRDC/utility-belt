@@ -24,24 +24,23 @@ def obtain_resource(site,r_id,API_key,filename=None):
     if filename is None:
         filename = "{}.csv".format(r_id)
 
-    list_of_dicts, success1 = get_all_records(site, r_id, API_key, chunk_size=5000)
-    fields, success2 = get_fields(site,r_id,API_key)
-    metadata, success3 = get_metadata(site,r_id,API_key)
-
-    if not success1 or not success2 or not success3:
+    try:
+        list_of_dicts = get_all_records(site, r_id, API_key, chunk_size=5000)
+        fields = get_fields(site,r_id,API_key)
+        metadata = get_metadata(site,r_id,API_key)
+    except:
         print("Something went wrong and the resource/fields/metadata was not obtained.")
         return False
-    else:
 
-        #Eliminate _id field
-        fields.remove("_id")
-        print("The resource has the following fields: {}".format(fields))
-        write_to_csv(filename,list_of_dicts,fields)
-        metaname = filename + '-metadata.json'
-        with open(metaname, 'w') as outfile:
-            json.dump(metadata, outfile, indent=4, sort_keys=True)
+    #Eliminate _id field
+    fields.remove("_id")
+    print("The resource has the following fields: {}".format(fields))
+    write_to_csv(filename,list_of_dicts,fields)
+    metaname = filename + '-metadata.json'
+    with open(metaname, 'w') as outfile:
+        json.dump(metadata, outfile, indent=4, sort_keys=True)
 
-        return True
+    return True
 
 def main():
     path = os.path.dirname(os.path.realpath(__file__))

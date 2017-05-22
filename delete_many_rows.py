@@ -5,17 +5,21 @@ from gadgets import get_site, get_resource_name, get_number_of_rows, delete_row_
 
 server = "Live"
 resource_id = "4a984000-6ddb-4c77-a628-7e979ce3c6d3" # HyperB
+resource_id = "48437601-7682-4b62-b754-5757a0fa3170"  # The Tessercat was Here
 
 with open('ckan_settings.json') as f:
     settings = json.load(f)
     API_key = settings["API Keys"][server]
     site = get_site(settings,server)
 
-resource_name, _ = get_resource_name(site,resource_id,API_key)
-initial_count, _ = get_number_of_rows(site,resource_id,API_key)
+resource_name = get_resource_name(site,resource_id,API_key)
+initial_count = get_number_of_rows(site,resource_id,API_key)
 
 _id_end = 1599043-1+1
 _id_start = 1619396 
+
+_id_end = 4 # _id_end should be less than _id_start
+_id_start = 5
 print("Preparing to delete rows {} to {} of the {} rows from {} ({}) on {}".format(_id_end, _id_start, initial_count, resource_name, resource_id, site))
 response = query_yes_no("Are you ready to delete some rows?", "no")
 
