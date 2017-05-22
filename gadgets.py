@@ -58,6 +58,15 @@ def query_yes_no(question, default="yes"):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
+## FUNCTIONS RELATED TO DATASTORE ALIASES ##
+def get_resource_aliases(site,resource_id):
+    # If a resource ID is an alias for the real resource ID, this function will
+    # convert the pseudonym into the real resource ID and return it.
+    ckan = ckanapi.RemoteCKAN(site)
+    results = ckan.action.datastore_search(id='_table_metadata',filters={'alias_of':resource_id})['records']
+    known_aliases = [r['name'] for r in results]
+    return known_aliases
+
 def dealias(site,pseudonym):
     # If a resource ID is an alias for the real resource ID, this function will
     # convert the pseudonym into the real resource ID and return it.
@@ -65,6 +74,25 @@ def dealias(site,pseudonym):
     aliases = ckan.action.datastore_search(id='_table_metadata',filters={'name': pseudonym})
     resource_id = aliases['records'][0]['alias_of']
     return resource_id
+
+def add_aliases_to_resource(site,resource_id,API_key,aliases=[],overwrite=False):
+    # Add one or more datastore aliases to an existing CKAN resource.
+    # Set the "overwrite" flag to True to just replace the resource's existing
+    # aliases with the ones passed in the aliases argument.
+    if not overwrite:
+        # Get existing aliases. 
+        known_aliases = get_resource_aliases(site,resource_id)
+        # Add new aliases to existing aliases.
+        if type(aliases) == list:
+            aliases = known_aliases + aliases
+        elif type(aliases) == str:
+            aliases = known_aliases + aliases.split(',')
+    # Push list of aliases back to the datastore.
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    outcome = ckan.action.datastore_create(resource_id=resource_id,aliases=aliases,force=True)
+    return outcome
+
+## END OF FUNCTIONS RELATED TO DATASTORE ALIASES ##
 
 
 def resource_show(ckan,resource_id):
