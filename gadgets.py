@@ -58,6 +58,17 @@ def query_yes_no(question, default="yes"):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
+def fire_grappling_hook(filepath='ckan_settings.json',server='Stage'):
+    # Get parameters to communicate with a CKAN instance
+    # from the specified JSON file.
+    with open(filepath) as f:
+        settings = json.load(f)
+        API_key = settings["API Keys"][server]
+        site = get_site(settings,server)
+
+    return site, API_key, settings
+
+
 ## FUNCTIONS RELATED TO DATASTORE ALIASES ##
 def get_resource_aliases(site,resource_id):
     # If a resource ID is an alias for the real resource ID, this function will
@@ -462,6 +473,14 @@ def retrieve_new_data(self):
         # Information about better ways to handle requests exceptions:
         #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
 
+# A function to upsert data would look like this:
+# def push_new_data(site,resource_id,API_key,list_of_dicts,method='upsert'):
+#   outcome = ckan.action.datastore_upsert(resource_id=resource_id,records=list_of_dicts,method=method,force=True)
+
+##   outcome = ckan.action.datastore_upsert(resource_id='48437601-7682-4b62-b754-5757a0fa3170',records=[{'Number':23,'Another Number':798,'Subway':'FALSE','Foodtongue':'Ice cream sandwich'}],method='upsert',force=True)
+
+
+## PRIMARY KEY FUNCTIONS ##
 def elicit_primary_key(site,resource_id,API_key):
     # This function uses a workaround to determine the primary keys of a resource
     # from a CKAN API call. 
@@ -528,6 +547,12 @@ def elicit_primary_key(site,resource_id,API_key):
         primary_keys = []
 
     return primary_keys
+
+def set_primary_keys(site,resource_id,API_key,keys):
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    outcome = ckan.action.datastore_create(resource_id=resource_id,primary_key=keys,force=True)
+    return outcome
+## END OF PRIMARY KEY FUNCTIONS ##
 
 def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API_key):
     success = False
