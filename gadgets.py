@@ -153,48 +153,6 @@ def get_site(settings,server):
     hostname = urlparse(url).hostname
     return "{}://{}".format(scheme,hostname)
 
-def execute_query(URL,query=None,API_key=None):
-    # [ ] If the query might result in a response that is too large or
-    # too burdensome for the CKAN instance to generate, paginate
-    # this process somehow.
-
-    # Information about better ways to handle requests exceptions:
-    #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
-
-
-    #To call the CKAN API, post a JSON dictionary in an HTTP POST
-    # request to one of CKAN's API URLs.
-
-    payload = {}
-    # These attempts to add the Authorization field to the request
-    # are failing, making it not yet possible for this function to work
-    # with private repositories.
-    #if API_key is not None:
-    #    payload = {'Authorization': API_key}
-    if query is not None:
-        payload['sql'] = query
-    try:
-        #print("payload = {}, URL = {}".format(payload,URL))
-
-        #head['Content-Type'] = 'application/x-www-form-urlencoded'
-        #in_dict = urllib.quote(json.dumps(in_dict))
-        #r = requests.post(url, data=in_dict, headers=head)
-
-        #payload = urllib.quote(json.dumps(payload))
-
-        r = requests.post(URL, payload)
-    except requests.exceptions.Timeout:
-        # Maybe set up for a retry, or continue in a retry loop
-        r = requests.post(URL, payload)
-    except requests.exceptions.TooManyRedirects:
-        # Tell the user their URL was bad and try a different one
-        print("This URL keeps redirecting. Maybe you should edit it.")
-    except requests.exceptions.RequestException as e:
-        # catastrophic error. bail.
-        print(e)
-        sys.exit(1)
-    return r
-
 def get_number_of_rows(site,resource_id,API_key=None):
 # This is pretty similar to get_fields and DRYer code might take
 # advantage of that.
