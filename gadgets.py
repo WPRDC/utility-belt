@@ -418,60 +418,11 @@ def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
         k += 1
         print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records),len(all_records)))
 
-    return all_records
-
-
-def get_resource(site,resource_id,chunk_size=500):
-    # Phasing this one out to be replaced by get_all_records
-    # since the latter supports private repositories.
-    limit = chunk_size
-    URL_template = "{}/api/3/action/datastore_search?resource_id={}&limit={}"
-
-    URL = URL_template.format(site, resource_id, limit)
-
-    all_records = []
-
-    failures = 0
-    records = [None, None, "Boojum"]
-    k = 0
-    while len(records) > 0 and failures < 5:
-        time.sleep(0.1)
-        records, fields, next_URL, success = pull_and_verify_data(URL,site,failures)
-        if success:
-            if records is not None:
-                all_records += records
-            URL = next_URL
-            failures = 0
-        else:
-            failures += 1
-        k += 1
-        print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records),len(all_records)))
-
-    return all_records, fields, success
-
-
-def retrieve_new_data(self):
-    URL = "{}/api/3/action/datastore_search_sql".format(self.site)
-
-    #query = "SELECT {} FROM \"{}\" WHERE \"{}\" > '{}';".format(self.field, self.resource_id, self.index_field, self.last_index_checked)
-    query = "SELECT \"{}\",\"{}\" FROM \"{}\" WHERE \"{}\" > {};".format(self.field, self.index_field, self.resource_id, self.index_field, int(self.last_index_checked)-1)
-    #query = "SELECT {} FROM \"{}\";".format(self.field, self.resource_id)
-
-    print(query)
-
-    r = execute_query(URL,query)
-
-    print(r.status_code)
-    if r.status_code != 200:
-        r = requests.get(URL, {'sql': query})
-    if r.status_code == 200:
-        records = json.loads(r.text)["result"]["records"]
-        last_index_checked = records[-1][self.index_field]
-        return records, last_index_checked, datetime.now()
-    else:
-        raise ValueError("Unable to obtain data from CKAN instance.")
         # Information about better ways to handle requests exceptions:
         #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
+
+    return all_records
+
 
 # A function to upsert data would look like this:
 # def push_new_data(site,resource_id,API_key,list_of_dicts,method='upsert'):
