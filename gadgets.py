@@ -195,33 +195,6 @@ def execute_query(URL,query=None,API_key=None):
         sys.exit(1)
     return r
 
-def pull_and_verify_data(URL, site, failures=0):
-    success = False
-    try:
-        r = execute_query(URL)
-        result = r.json()["result"]
-        records = result["records"]
-        # You can just iterate through using the _links results in the
-        # API response:
-        #    "_links": {
-        #  "start": "/api/action/datastore_search?limit=5&resource_id=5bbe6c55-bce6-4edb-9d04-68edeb6bf7b1",
-        #  "next": "/api/action/datastore_search?offset=5&limit=5&resource_id=5bbe6c55-bce6-4edb-9d04-68edeb6bf7b1"
-        list_of_fields_dicts = result['fields']
-        all_fields = [d['id'] for d in list_of_fields_dicts]
-        if r.status_code != 200:
-            failures += 1
-        else:
-            URL = site + result["_links"]["next"]
-            success = True
-    except:
-        records = None
-        all_fields = None
-        #raise ValueError("Unable to obtain data from CKAN instance.")
-    # Information about better ways to handle requests exceptions:
-    #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
-
-    return records, all_fields, URL, success
-
 def get_number_of_rows(site,resource_id,API_key=None):
 # This is pretty similar to get_fields and DRYer code might take
 # advantage of that.
@@ -417,6 +390,17 @@ def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
         #row_count = get_number_of_rows(site,resource_id,API_key)
         k += 1
         print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records),len(all_records)))
+
+        # Another option for iterating through the records of a resource would be to 
+        # just iterate through using the _links results in the API response:
+        #    "_links": {
+        #  "start": "/api/action/datastore_search?limit=5&resource_id=5bbe6c55-bce6-4edb-9d04-68edeb6bf7b1",
+        #  "next": "/api/action/datastore_search?offset=5&limit=5&resource_id=5bbe6c55-bce6-4edb-9d04-68edeb6bf7b1"
+        # Like this:
+            #if r.status_code != 200:
+            #    failures += 1
+            #else:
+            #    URL = site + result["_links"]["next"]
 
         # Information about better ways to handle requests exceptions:
         #http://stackoverflow.com/questions/16511337/correct-way-to-try-except-using-python-requests-module/16511493#16511493
