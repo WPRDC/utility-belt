@@ -49,7 +49,12 @@ def main():
     if len(sys.argv) > 2:
         filename = sys.argv[2]
     server = "Live"
-    with open(path+'/ckan_settings.json') as f:
+
+    settings_file = '/ckan_settings.json'
+    if len(sys.argv) > 3:
+        settings_file = sys.argv[3]
+
+    with open(path+settings_file) as f:
         settings = json.load(f)
         API_key = settings["API Keys"][server]
         site = get_site(settings,server)
