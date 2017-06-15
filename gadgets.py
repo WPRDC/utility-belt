@@ -301,11 +301,16 @@ def query_resource(site,query,API_key=None):
     data = response['records']
     return data
 
-def get_resource_data(site,resource_id,API_key=None,count=50,offset=0):
+def get_resource_data(site,resource_id,API_key=None,count=50,offset=0,fields=None):
     # Use the datastore_search API endpoint to get <count> records from
-    # a CKAN resource
+    # a CKAN resource starting at the given offset and only returning the
+    # specified fields in the given order (defaults to all fields in the
+    # default datastore order).
     ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-    response = ckan.action.datastore_search(id=resource_id, limit=count, offset=offset)
+    if fields is None:
+        response = ckan.action.datastore_search(id=resource_id, limit=count, offset=offset)
+    else:
+        response = ckan.action.datastore_search(id=resource_id, limit=count, offset=offset, fields=fields)
     # A typical response is a dictionary like this
     #{u'_links': {u'next': u'/api/action/datastore_search?offset=3',
     #             u'start': u'/api/action/datastore_search'},
@@ -375,10 +380,55 @@ def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
 
 
 # A function to upsert data would look like this:
-# def push_new_data(site,resource_id,API_key,list_of_dicts,method='upsert'):
-#   outcome = ckan.action.datastore_upsert(resource_id=resource_id,records=list_of_dicts,method=method,force=True)
+def push_new_data(site,resource_id,API_key,list_of_dicts,method='upsert'):
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    outcome = ckan.action.datastore_upsert(resource_id=resource_id,records=list_of_dicts,method=method,force=True)
+#   outcome = ckan.action.datastore_upsert(resource_id='48437601-7682-4b62-b754-5757a0fa3170',records=[{'Number':23,'Another Number':798,'Subway':'FALSE','Foodtongue':'Ice cream sandwich'}],method='upsert',force=True)
+    return outcome
 
-##   outcome = ckan.action.datastore_upsert(resource_id='48437601-7682-4b62-b754-5757a0fa3170',records=[{'Number':23,'Another Number':798,'Subway':'FALSE','Foodtongue':'Ice cream sandwich'}],method='upsert',force=True)
+def copy_all_records(site,source_resource_id,destination_resource_id,API_key=None,chunk_size=5000):
+    # This is based on get_all_records. It might be interesting to pass 
+    # a generalized version of these functions something that would let it 
+    # either copy the records to a second repository (and return a Boolean)
+    # or just return all the records. The best way of structuring such 
+    # a generalized iteration over the records is not clear (though passing
+    # a function that either uploads data or does nothing might be a nice
+    # approach.
+    total_records = 0
+    failures = 0
+    failure_limit = 5
+    k = 0
+    offset = 0 # offset is almost k*chunk_size (but not quite)
+    row_count = get_number_of_rows(site,source_resource_id,API_key)
+    if row_count == 0: # or if the datastore is not active
+       print("No data found in the datastore.")
+       return False
+
+    # Filter out the annoying _id column by getting the field names,
+    # deleting "_id", and passing the resulting list to 
+    # get_resource_data.
+    fields = get_fields(site,source_resource_id,API_key)
+    fields.remove('_id')
+
+    while total_records < row_count and failures < failure_limit:
+        time.sleep(0.02)
+        try:
+            records = get_resource_data(site,source_resource_id,API_key,chunk_size,offset,fields)
+            failures = 0
+            offset += chunk_size
+            outcome = push_new_data(site,destination_resource_id,API_key,records,'upsert')
+            total_records += len(records)
+        except:
+            failures += 1
+        
+        # If the number of rows is a moving target, incorporate
+        # this step:
+        row_count = get_number_of_rows(site,source_resource_id,API_key)
+        
+        k += 1
+        print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records),total_records))
+
+    return (failures < failure_limit)
 
 
 ## PRIMARY KEY FUNCTIONS ##
@@ -531,6 +581,115 @@ def disable_downloading(site,resource_id,API_key=None):
     # dump from the datastore to a "#" symbol.
     return set_resource_parameters_to_values(site,resource_id,['url','url_type'],['#',''],API_key)
 
+##### Resource-scale operations #####
+def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
+    """Clone a resource.
+    
+    Makes a copy of the resource specified by the given resource ID and puts
+    it in the package specified by the supplied package ID.
+
+    If no destination_package_id is given, the resource is cloned 
+    to the source package (dataset).
+    
+    Things to be cloned include Filestore files; Datastore data, schema, and
+    primary keys; metadata; and resource views."""
+
+
+    # To do: Generalize dealias function and use it here to allow
+    # an alias to be used instead when specifying source_resource_id.
+    print("This function is currently in beta and only does a subset of cloning operations.")
+ 
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+
+    # Get metadata
+
+    metadata = get_metadata(site,source_resource_id,API_key)
+    # Returns stuff like this:
+    # {u'cache_last_updated': None,
+    # u'cache_url': None,
+    # u'created': u'2017-04-25T15:20:28.470100',
+    # u'datastore_active': True, <<<<<<<<<<<<<<
+    # u'description': u'', <<<<<<<<<<<<
+    # u'format': u'CSV', <<<<<<<<<<<<<<<<
+    # u'hash': u'',
+    # u'id': u'683e38ea-338c-474f-a56f-1aa553a55443',
+    # u'last_modified': u'2017-05-17T16:59:17.116500',
+    # u'mimetype': None,
+    # u'mimetype_inner': None,
+    # u'name': u'Parking Data', <<<<<<<<<<<<<<<
+    # u'package_id': u'530f334b-4d7c-40c5-bf50-ba55645bb8b3',
+    # u'position': 3,
+    # u'resource_type': None,
+    # u'revision_id': u'9e086e5f-f171-451e-a827-38cb24f5482b', <<<<<<<<<<<<< Interesting.
+    # u'size': None,
+    # u'state': u'active', <?????????????
+    # u'url': u'https://data.wprdc.org/datastore/dump/683e38ea-338c-474f-a56f-1aa553a55443', << The url 
+    #  << parameter is required when creating a resource (in our outdated CKAN version), but I think 
+    #  << we can just put an octothorpe there initially.
+    # u'url_type': u'datapusher',
+    # u'webstore_last_updated': None,
+    # u'webstore_url': None}
+    # This is just the results of resource_show.
+    name = metadata['name']
+    position_in_list = metadata['position']
+    source_package_id = metadata['package_id']
+    if destination_package_id is None:
+        destination_package_id = source_package_id
+        name = 'Clone of ' + metadata['name']
+
+    datastore_active = metadata['datastore_active']
+    r_format = metadata['format'] # Consider checking whether this format is an oddball format
+                                  # like "CSV" vs. ".csv" vs. "csv". 
+    # How does creating the resource fail if the package ID does not map to an existing package?
+    cloned_resource_as_dict = ckan.action.resource_create(package_id=destination_package_id,url='#',format=r_format,name=name)
+
+    pprint.pprint(cloned_resource_as_dict)
+    clone_resource_id = cloned_resource_as_dict['id']
+    # Get datastore data (if any)
+    if datastore_active:
+        #ckan.action.resource_patch(id=clone_resource_id,url_type='datastore',url=site)
+        # It seems like patching the resource to have a url_type of 'datastore' did avoid needing to force
+        # the creation of the datastore below, but always resulted in a URL that was just 
+        #   "/datastore/dump/<clone_resource_id>"
+        # and which was never hyperlinked (and could seemingly never be changed to be hyperlinked thereafter).
+        schema = get_schema(site,source_resource_id,API_key)
+        if schema[0] == {u'type': u'int4', u'id': u'_id'}:
+            del schema[0]
+        pprint.pprint(schema)
+        primary_keys = elicit_primary_key(site,source_resource_id,API_key)
+
+        call_result = ckan.action.datastore_create(resource_id=clone_resource_id,fields=schema,primary_key=primary_keys,force=True)
+        last_part = get_resource_parameter(site,clone_resource_id,'url',API_key)
+        outcome = ckan.action.resource_patch(id=clone_resource_id,url='https://data.wprdc.org/datastore/dump/'+clone_resource_id,force=True)
+        #pprint.pprint(outcome)
+
+        print(get_resource_parameter(site,clone_resource_id,'url',API_key))
+        # Loop through rows of data in chunks, getting data and putting it into the new resource
+        copy_success = copy_all_records(site,source_resource_id,clone_resource_id,API_key,chunk_size=1) #5000)
+        success = copy_success
+    else:
+        success = True
+
+    #success = False
+    #try:
+    #    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    #    response = ckan.action.datastore_delete(id=resource_id, filters={"_id":_id}, force=True)
+    #    success = True
+    #except:
+    #    success = False
+    #    exc_type, exc_value, exc_traceback = sys.exc_info()
+    #    print("Error: {}".format(exc_type))
+    #    lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    #    print(''.join('!!! ' + line for line in lines))
+    #return success
+    
+    return success
+
+##### End of resource-scale operations #####
+
+##### Dataset-scale operations #####
+
+##### End of dataset-scale operations #####
 def to_dict(input_ordered_dict):
     return loads(dumps(input_ordered_dict))
 
