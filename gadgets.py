@@ -665,7 +665,7 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
 
         print(get_resource_parameter(site,clone_resource_id,'url',API_key))
         # Loop through rows of data in chunks, getting data and putting it into the new resource
-        copy_success = copy_all_records(site,source_resource_id,clone_resource_id,API_key,chunk_size=1) #5000)
+        copy_success = copy_all_records(site,source_resource_id,clone_resource_id,API_key,chunk_size=5000)
         success = copy_success
     else:
         success = True
