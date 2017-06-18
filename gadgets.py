@@ -90,9 +90,13 @@ def dealias(site,pseudonym):
     # If a resource ID is an alias for the real resource ID, this function will
     # convert the pseudonym into the real resource ID and return it.
     ckan = ckanapi.RemoteCKAN(site)
-    aliases = ckan.action.datastore_search(id='_table_metadata',filters={'name': pseudonym})
-    resource_id = aliases['records'][0]['alias_of']
-    return resource_id
+    alias_response = ckan.action.datastore_search(id='_table_metadata',filters={'name': pseudonym})
+    aliases = alias_response['records']
+    if len(aliases) > 0:
+        resource_id = aliases[0]['alias_of']
+        return resource_id
+    else:
+        return None
 
 def add_aliases_to_resource(site,resource_id,API_key,aliases=[],overwrite=False):
     # Add one or more datastore aliases to an existing CKAN resource.
