@@ -87,22 +87,20 @@ def main():
         if destination_id is None:
             # Create a new package 
 
-            destination_id = ckan.action.package_create
+            destination_id = ckan.action.package_create()
             destination_type = 'package'
         # Do the cloning
-
-    server = "Live"
-
-    settings_file = '/ckan_settings.json'
-    if len(sys.argv) > 3:
-        settings_file = sys.argv[3]
-
-    with open(path+settings_file) as f:
-        settings = json.load(f)
-        API_key = settings["API Keys"][server]
-        site = get_site(settings,server)
-
-    success = obtain_resource(site,resource_id,API_key,filename)
+        
+        if source_type == 'package':
+            resources = get_package_parameter(site,source_id,'resources')
+            # for each resource in the source package
+            for r in resources:
+                # clone the resource
+                success = clone_resource(site,r['id'],API_key,destination_id)
+                # also clone all the package-level metadata
+        elif source_type == 'resource':
+            success = clone_resource(site,source_id,API_key,destination_package_id=None) # The destination ID here
+            # still needs some thought.
 
 ############
 
