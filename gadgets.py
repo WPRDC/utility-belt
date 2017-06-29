@@ -5,7 +5,6 @@ from collections import OrderedDict
 from json import loads, dumps
 import json
 import operator
-import requests
 import time
 import urllib
 try:
