@@ -195,6 +195,27 @@ def get_fields(site,resource_id,API_key=None):
 
     return fields
 
+def schema_dict(schema):
+    # A schema looks like this:
+    #[{'id': '_id', 'type': 'int4'},
+    # {'id': 'pin', 'type': 'text'},
+    # {'id': 'block_lot', 'type': 'text'},
+    # {'id': 'filing_date', 'type': 'date'},
+    # {'id': 'tax_year', 'type': 'int4'},
+    # {'id': 'dtd', 'type': 'text'},
+    # {'id': 'lien_description', 'type': 'text'},
+    # {'id': 'municipality', 'type': 'text'},
+    # {'id': 'ward', 'type': 'text'},
+    # {'id': 'last_docket_entry', 'type': 'text'},
+    # {'id': 'amount', 'type': 'float8'},
+    # {'id': 'assignee', 'type': 'text'}]
+    # This function converts it into a more useful form:
+    # {'_id': 'int4', 'pin': 'text',...}
+    d = {}
+    for s in schema:
+        d[s['id']] = s['type']
+    return d
+
 def get_schema(site,resource_id,API_key=None):
     # In principle, it should be possible to do this using the datastore_info 
     # endpoint instead and taking the 'schema' part of the result.
