@@ -7,6 +7,8 @@ server = "Live"
 resource_id = "4a984000-6ddb-4c77-a628-7e979ce3c6d3" # HyperB
 resource_id = "48437601-7682-4b62-b754-5757a0fa3170"  # The Tessercat was Here
 
+resource_id = "7e203d63-35a1-4ed9-90a5-6de70e406784" # Sample Parking Transactions  - Ad hoc zones
+
 site, API_key, _ = fire_grappling_hook('ckan_settings.json',server)
 
 resource_name = get_resource_name(site,resource_id,API_key)
@@ -17,6 +19,10 @@ _id_start = 1619396
 
 _id_end = 9 # _id_end should be less than _id_start
 _id_start = 10
+
+
+_id_start = 545546
+_id_end = 545513 # The last one to delete
 print("Preparing to delete rows {} to {} of the {} rows from {} ({}) on {}".format(_id_end, _id_start, initial_count, resource_name, resource_id, site))
 response = query_yes_no("Are you ready to delete some rows?", "no")
 
