@@ -711,7 +711,30 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
 
 ##### End of resource-scale operations #####
 
-##### Dataset-scale operations #####
+##### (Some) dataset-scale operations #####
+# get_package_parameter is defined above. #
+
+def set_package_parameters_to_values(site,package_id,parameters,new_values,API_key):
+    success = False
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        original_values = [get_package_parameter(site,package_id,p,API_key) for p in parameters]
+        payload = {}
+        payload['id'] = package_id
+        for parameter,new_value in zip(parameters,new_values):
+            payload[parameter] = new_value
+        results = ckan.action.package_patch(**payload)
+        print(results)
+        print("Changed the parameters {} from {} to {} on package {}".format(parameters, original_values, new_values, package_id))
+        success = True
+    except:
+        success = False
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        print("Error: {}".format(exc_type))
+        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        print(''.join('!!! ' + line for line in lines))
+
+    return success
 
 ##### End of dataset-scale operations #####
 def to_dict(input_ordered_dict):
