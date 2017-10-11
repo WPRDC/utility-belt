@@ -528,8 +528,36 @@ def set_primary_keys(site,resource_id,API_key,keys):
     outcome = ckan.action.datastore_create(resource_id=resource_id,primary_key=keys,force=True)
     return outcome
 ## END OF PRIMARY KEY FUNCTIONS ##
+def create_resource_parameter(site,resource_id,parameter,value,API_key):
+    """Creates one parameters with the given value for the specified
+    resource."""
+    success = False
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        payload = {}
+        payload['id'] = resource_id
+        payload[parameter] = value
+        #For example,
+        #   results = ckan.action.resource_patch(id=resource_id, url='#', url_type='')
+        results = ckan.action.resource_patch(**payload)
+        print(results)
+        print("Created the parameter {} with value {} for resource {}".format(parameter, value, resource_id))
+        success = True
+    except:
+        success = False
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        print("Error: {}".format(exc_type))
+        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        print(''.join('!!! ' + line for line in lines))
+
+    return success
 
 def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API_key):
+    """Sets the given resource parameters to the given values for the specified
+    resource. 
+
+    This fails if the parameter does not currently exist. (In this case, use
+    create_resource_parameter()."""
     success = False
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
