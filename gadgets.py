@@ -290,6 +290,8 @@ def get_package_name_from_resource_id(site,resource_id,API_key=None):
     return get_package_parameter(site,p_id,'title',API_key)
 
 def find_resource_id(site,package_id,resource_name,API_key=None):
+#def get_resource_id_by_resource_name():
+    # Get the resource ID given the package ID and resource name.
     resources = get_package_parameter(site,package_id,'resources',API_key)
     for r in resources:
         if r['name'] == resource_name:
