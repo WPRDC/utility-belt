@@ -17,7 +17,7 @@ server = "Live"
 #
 
 if len(sys.argv) < 3:
-    print("Specify a resource ID and a URL to disable downloading of that resource.")
+    print("Specify a resource ID to change the download URL of and the value to set that download URL to.")
 else:
     resource_id = sys.argv[1]
     url = sys.argv[2]
