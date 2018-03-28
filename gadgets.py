@@ -237,7 +237,9 @@ def get_metadata(site,resource_id,API_key=None):
 
     return metadata
 
-def get_package_parameter(site,package_id,parameter,API_key=None):
+def get_package_parameter(site,package_id,parameter=None,API_key=None):
+    """Gets a CKAN package parameter. If no parameter is specified, all metadata
+    for that package is returned."""
     # Some package parameters you can fetch from the WPRDC with
     # this function are:
     # 'geographic_unit', 'owner_org', 'maintainer', 'data_steward_email',
@@ -254,12 +256,12 @@ def get_package_parameter(site,package_id,parameter,API_key=None):
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
         metadata = ckan.action.package_show(id=package_id)
-        desired_string = metadata[parameter]
-        #print("The parameter {} for this package is {}".format(parameter,metadata[parameter]))
+        if parameter is None:
+            return metadata
+        else:
+            return metadata[parameter]
     except:
         raise RuntimeError("Unable to obtain package parameter '{}' for package with ID {}".format(parameter,package_id))
-        
-    return desired_string
 
 def get_resource_parameter(site,resource_id,parameter,API_key=None):
     # Some resource parameters you can fetch with this function are
