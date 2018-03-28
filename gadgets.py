@@ -263,7 +263,7 @@ def get_package_parameter(site,package_id,parameter=None,API_key=None):
     except:
         raise RuntimeError("Unable to obtain package parameter '{}' for package with ID {}".format(parameter,package_id))
 
-def get_resource_parameter(site,resource_id,parameter,API_key=None):
+def get_resource_parameter(site,resource_id,parameter=None,API_key=None):
     # Some resource parameters you can fetch with this function are
     # 'cache_last_updated', 'package_id', 'webstore_last_updated',
     # 'datastore_active', 'id', 'size', 'state', 'hash',
@@ -276,13 +276,12 @@ def get_resource_parameter(site,resource_id,parameter,API_key=None):
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
         metadata = resource_show(ckan,resource_id)
-        desired_string = metadata[parameter]
-
-        #print("The parameter {} for this resource is {}".format(parameter,metadata[parameter]))
+        if parameter is None:
+            return metadata
+        else:
+            metadata[parameter]
     except:
         raise RuntimeError("Unable to obtain resource parameter '{}' for resource with ID {}".format(parameter,resource_id))
-
-    return desired_string
 
 def get_resource_name(site,resource_id,API_key=None):
     return get_resource_parameter(site,resource_id,'name',API_key)
