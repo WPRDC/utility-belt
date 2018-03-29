@@ -279,7 +279,7 @@ def get_resource_parameter(site,resource_id,parameter=None,API_key=None):
         if parameter is None:
             return metadata
         else:
-            metadata[parameter]
+            return metadata[parameter]
     except:
         raise RuntimeError("Unable to obtain resource parameter '{}' for resource with ID {}".format(parameter,resource_id))
 
