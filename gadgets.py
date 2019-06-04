@@ -404,7 +404,7 @@ def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
         # this step:
         #row_count = get_number_of_rows(site,resource_id,API_key)
         k += 1
-        print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records),len(all_records)))
+        print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records) if records is not None else 0,len(all_records)))
 
         # Another option for iterating through the records of a resource would be to 
         # just iterate through using the _links results in the API response:
