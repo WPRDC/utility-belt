@@ -103,7 +103,7 @@ def add_aliases_to_resource(site,resource_id,API_key,aliases=[],overwrite=False)
     # Set the "overwrite" flag to True to just replace the resource's existing
     # aliases with the ones passed in the aliases argument.
     if not overwrite:
-        # Get existing aliases. 
+        # Get existing aliases.
         known_aliases = get_resource_aliases(site,resource_id)
         # Add new aliases to existing aliases.
         if type(aliases) == list:
@@ -120,7 +120,7 @@ def add_aliases_to_resource(site,resource_id,API_key,aliases=[],overwrite=False)
 
 def resource_show(ckan,resource_id):
     # A wrapper around resource_show (which could be expanded to any resource endpoint)
-    # that tries the action, and if it fails, tries to dealias the resource ID and tries 
+    # that tries the action, and if it fails, tries to dealias the resource ID and tries
     # the action again.
     try:
         metadata = ckan.action.resource_show(id=resource_id)
@@ -132,7 +132,7 @@ def resource_show(ckan,resource_id):
         msg = "{} was not found on that CKAN instance".format(resource_id)
         print(msg)
         raise ckanapi.errors.NotFound(msg)
-    
+
     return metadata
 
 def initialize_datastore(resource_id, ordered_fields, keys=None, settings_file='ckan_settings.json', server='Live'):
@@ -184,7 +184,7 @@ def get_number_of_rows(site,resource_id,API_key=None):
     return count
 
 def get_fields(site,resource_id,API_key=None):
-    # In principle, it should be possible to do this using the datastore_info 
+    # In principle, it should be possible to do this using the datastore_info
     # endpoint instead and taking the 'schema' part of the result.
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
@@ -218,7 +218,7 @@ def schema_dict(schema):
     return d
 
 def get_schema(site,resource_id,API_key=None):
-    # In principle, it should be possible to do this using the datastore_info 
+    # In principle, it should be possible to do this using the datastore_info
     # endpoint instead and taking the 'schema' part of the result.
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
@@ -407,7 +407,7 @@ def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
         k += 1
         print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records) if records is not None else 0,len(all_records)))
 
-        # Another option for iterating through the records of a resource would be to 
+        # Another option for iterating through the records of a resource would be to
         # just iterate through using the _links results in the API response:
         #    "_links": {
         #  "start": "/api/action/datastore_search?limit=5&resource_id=5bbe6c55-bce6-4edb-9d04-68edeb6bf7b1",
@@ -432,10 +432,10 @@ def push_new_data(site,resource_id,API_key,list_of_dicts,method='upsert'):
     return outcome
 
 def copy_all_records(site,source_resource_id,destination_resource_id,API_key=None,chunk_size=5000):
-    # This is based on get_all_records. It might be interesting to pass 
-    # a generalized version of these functions something that would let it 
+    # This is based on get_all_records. It might be interesting to pass
+    # a generalized version of these functions something that would let it
     # either copy the records to a second repository (and return a Boolean)
-    # or just return all the records. The best way of structuring such 
+    # or just return all the records. The best way of structuring such
     # a generalized iteration over the records is not clear (though passing
     # a function that either uploads data or does nothing might be a nice
     # approach.
@@ -450,7 +450,7 @@ def copy_all_records(site,source_resource_id,destination_resource_id,API_key=Non
        return False
 
     # Filter out the annoying _id column by getting the field names,
-    # deleting "_id", and passing the resulting list to 
+    # deleting "_id", and passing the resulting list to
     # get_resource_data.
     fields = get_fields(site,source_resource_id,API_key)
     fields.remove('_id')
@@ -465,11 +465,11 @@ def copy_all_records(site,source_resource_id,destination_resource_id,API_key=Non
             total_records += len(records)
         except:
             failures += 1
-        
+
         # If the number of rows is a moving target, incorporate
         # this step:
         row_count = get_number_of_rows(site,source_resource_id,API_key)
-        
+
         k += 1
         print("{} iterations, {} failures, {} records, {} total records".format(k,failures,len(records),total_records))
 
@@ -479,10 +479,10 @@ def copy_all_records(site,source_resource_id,destination_resource_id,API_key=Non
 ## PRIMARY KEY FUNCTIONS ##
 def elicit_primary_key(site,resource_id,API_key):
     # This function uses a workaround to determine the primary keys of a resource
-    # from a CKAN API call. 
+    # from a CKAN API call.
 
     # Note that it has not been tested on primary-key-less resources and this represents
-    # kind of a problem because, if used on such a resource, it will succeed in adding 
+    # kind of a problem because, if used on such a resource, it will succeed in adding
     # the duplicate row to the table.
     primary_keys = None
     try:
@@ -493,7 +493,7 @@ def elicit_primary_key(site,resource_id,API_key):
         first_row = records[0]
         # Try to insert it into the database
         del first_row["_id"]
-        results = ckan.action.datastore_upsert(resource_id=resource_id, method='insert', 
+        results = ckan.action.datastore_upsert(resource_id=resource_id, method='insert',
             records=[first_row], force=True)
         pprint.pprint(results)
     except ckanapi.ValidationError as exception:
@@ -509,7 +509,7 @@ def elicit_primary_key(site,resource_id,API_key):
         # [u'"Key Number 1"', u'"Another Key that is Primary"']
         # so some extra processing is required.
         revised_primary_keys = []
-        for pk in primary_keys: 
+        for pk in primary_keys:
             if pk[0] == u'"' and pk[-1] == u'"':
                 pk = pk[1:-1]
             revised_primary_keys.append(pk)
@@ -526,10 +526,10 @@ def elicit_primary_key(site,resource_id,API_key):
         value_of_id = int(last_row['_id'])
         msg = "This function was run on a resource that has no primary key"
         msg += " and therefore added a duplicate row that was never intended to be added."
-        msg += " The correct thing to do here is to delete"  
+        msg += " The correct thing to do here is to delete"
         msg += " row with _id = {}".format(value_of_id)
         print(msg)
-        
+
         if new_row_count == row_count+1:
             # Delete the last row (if it matches the one that was just added):
             del last_row['_id']
@@ -550,7 +550,7 @@ def set_primary_keys(site,resource_id,API_key,keys):
     return outcome
 ## END OF PRIMARY KEY FUNCTIONS ##
 def create_resource_parameter(site,resource_id,parameter,value,API_key):
-    """Creates one parameters with the given value for the specified
+    """Creates one parameter with the given value for the specified
     resource."""
     success = False
     try:
@@ -575,7 +575,7 @@ def create_resource_parameter(site,resource_id,parameter,value,API_key):
 
 def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API_key):
     """Sets the given resource parameters to the given values for the specified
-    resource. 
+    resource.
 
     This fails if the parameter does not currently exist. (In this case, use
     create_resource_parameter()."""
@@ -605,7 +605,7 @@ def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API
 # Comment out this function since it's not working as intended yet.
 #def recast_field(site,resource_id,field,new_type,API_key):
 #    # Experiments suggest that this function can be used to convert an integer field
-#    # to a string field (text), but that if you try to convert back, the string 
+#    # to a string field (text), but that if you try to convert back, the string
 #    # values in that field do not get converted back to integers (though the field
 #    # itself does appear to have type numeric.
 #
@@ -657,13 +657,13 @@ def disable_downloading(site,resource_id,API_key=None):
 ##### Resource-scale operations #####
 def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
     """Clone a resource.
-    
+
     Makes a copy of the resource specified by the given resource ID and puts
     it in the package specified by the supplied package ID.
 
-    If no destination_package_id is given, the resource is cloned 
+    If no destination_package_id is given, the resource is cloned
     to the source package (dataset).
-    
+
     Things to be cloned include Filestore files; Datastore data, schema, and
     primary keys; metadata; and resource views."""
 
@@ -671,7 +671,7 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
     # To do: Generalize dealias function and use it here to allow
     # an alias to be used instead when specifying source_resource_id.
     print("This function is currently in beta and only does a subset of cloning operations.")
- 
+
     ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
 
     # Get metadata
@@ -696,8 +696,8 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
     # u'revision_id': u'9e086e5f-f171-451e-a827-38cb24f5482b', <<<<<<<<<<<<< Interesting.
     # u'size': None,
     # u'state': u'active', <?????????????
-    # u'url': u'https://data.wprdc.org/datastore/dump/683e38ea-338c-474f-a56f-1aa553a55443', << The url 
-    #  << parameter is required when creating a resource (in our outdated CKAN version), but I think 
+    # u'url': u'https://data.wprdc.org/datastore/dump/683e38ea-338c-474f-a56f-1aa553a55443', << The url
+    #  << parameter is required when creating a resource (in our outdated CKAN version), but I think
     #  << we can just put an octothorpe there initially.
     # u'url_type': u'datapusher',
     # u'webstore_last_updated': None,
@@ -712,7 +712,7 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
 
     datastore_active = metadata['datastore_active']
     r_format = metadata['format'] # Consider checking whether this format is an oddball format
-                                  # like "CSV" vs. ".csv" vs. "csv". 
+                                  # like "CSV" vs. ".csv" vs. "csv".
     # How does creating the resource fail if the package ID does not map to an existing package?
     cloned_resource_as_dict = ckan.action.resource_create(package_id=destination_package_id,url='#',format=r_format,name=name)
 
@@ -722,7 +722,7 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
     if datastore_active:
         #ckan.action.resource_patch(id=clone_resource_id,url_type='datastore',url=site)
         # It seems like patching the resource to have a url_type of 'datastore' did avoid needing to force
-        # the creation of the datastore below, but always resulted in a URL that was just 
+        # the creation of the datastore below, but always resulted in a URL that was just
         #   "/datastore/dump/<clone_resource_id>"
         # and which was never hyperlinked (and could seemingly never be changed to be hyperlinked thereafter).
         schema = get_schema(site,source_resource_id,API_key)
@@ -755,7 +755,7 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
     #    lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
     #    print(''.join('!!! ' + line for line in lines))
     #return success
-    
+
     return success
 
 ##### End of resource-scale operations #####
