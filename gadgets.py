@@ -254,15 +254,15 @@ def get_package_parameter(site,package_id,parameter=None,API_key=None):
     # 'name', 'isopen', 'url', 'notes', 'license_title',
     # 'temporal_coverage', 'related_documents', 'license_url',
     # 'organization', 'revision_id'
-    try:
-        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        metadata = ckan.action.package_show(id=package_id)
-        if parameter is None:
-            return metadata
-        else:
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    metadata = ckan.action.package_show(id=package_id)
+    if parameter is None:
+        return metadata
+    else:
+        if parameter in metadata:
             return metadata[parameter]
-    except:
-        raise RuntimeError("Unable to obtain package parameter '{}' for package with ID {}".format(parameter,package_id))
+        else:
+            return None
 
 def get_resource_parameter(site,resource_id,parameter=None,API_key=None):
     # Some resource parameters you can fetch with this function are
@@ -274,15 +274,12 @@ def get_resource_parameter(site,resource_id,parameter=None,API_key=None):
     # 'revision_id', 'resource_type'
     # Note that 'size' does not seem to be defined for tabular
     # data on WPRDC.org. (It's not the number of rows in the resource.)
-    try:
-        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        metadata = resource_show(ckan,resource_id)
-        if parameter is None:
-            return metadata
-        else:
-            return metadata[parameter]
-    except:
-        raise RuntimeError("Unable to obtain resource parameter '{}' for resource with ID {}".format(parameter,resource_id))
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    metadata = resource_show(ckan,resource_id)
+    if parameter is None:
+        return metadata
+    else:
+        return metadata[parameter]
 
 def get_resource_name(site,resource_id,API_key=None):
     return get_resource_parameter(site,resource_id,'name',API_key)
@@ -552,55 +549,34 @@ def set_primary_keys(site,resource_id,API_key,keys):
 def create_resource_parameter(site,resource_id,parameter,value,API_key):
     """Creates one parameter with the given value for the specified
     resource."""
-    success = False
-    try:
-        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        payload = {}
-        payload['id'] = resource_id
-        payload[parameter] = value
-        #For example,
-        #   results = ckan.action.resource_patch(id=resource_id, url='#', url_type='')
-        results = ckan.action.resource_patch(**payload)
-        print(results)
-        print("Created the parameter {} with value {} for resource {}".format(parameter, value, resource_id))
-        success = True
-    except:
-        success = False
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        print("Error: {}".format(exc_type))
-        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        print(''.join('!!! ' + line for line in lines))
-
-    return success
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    payload = {}
+    payload['id'] = resource_id
+    payload[parameter] = value
+    #For example,
+    #   results = ckan.action.resource_patch(id=resource_id, url='#', url_type='')
+    results = ckan.action.resource_patch(**payload)
+    print(results)
+    print("Created the parameter {} with value {} for resource {}".format(parameter, value, resource_id))
+    success = True
 
 def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API_key):
     """Sets the given resource parameters to the given values for the specified
     resource.
 
     This fails if the parameter does not currently exist. (In this case, use
-    create_resource_parameter()."""
-    success = False
-    try:
-        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        original_values = [get_resource_parameter(site,resource_id,p,API_key) for p in parameters]
-        payload = {}
-        payload['id'] = resource_id
-        for parameter,new_value in zip(parameters,new_values):
-            payload[parameter] = new_value
-        #For example,
-        #   results = ckan.action.resource_patch(id=resource_id, url='#', url_type='')
-        results = ckan.action.resource_patch(**payload)
-        print(results)
-        print("Changed the parameters {} from {} to {} on resource {}".format(parameters, original_values, new_values, resource_id))
-        success = True
-    except:
-        success = False
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        print("Error: {}".format(exc_type))
-        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        print(''.join('!!! ' + line for line in lines))
-
-    return success
+    create_resource_parameter().)"""
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    original_values = [get_resource_parameter(site,resource_id,p,API_key) for p in parameters]
+    payload = {}
+    payload['id'] = resource_id
+    for parameter,new_value in zip(parameters,new_values):
+        payload[parameter] = new_value
+    #For example,
+    #   results = ckan.action.resource_patch(id=resource_id, url='#', url_type='')
+    results = ckan.action.resource_patch(**payload)
+    print(results)
+    print("Changed the parameters {} from {} to {} on resource {}".format(parameters, original_values, new_values, resource_id))
 
 # Comment out this function since it's not working as intended yet.
 #def recast_field(site,resource_id,field,new_type,API_key):
@@ -764,26 +740,15 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
 # get_package_parameter is defined above. #
 
 def set_package_parameters_to_values(site,package_id,parameters,new_values,API_key):
-    success = False
-    try:
-        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        original_values = [get_package_parameter(site,package_id,p,API_key) for p in parameters]
-        payload = {}
-        payload['id'] = package_id
-        for parameter,new_value in zip(parameters,new_values):
-            payload[parameter] = new_value
-        results = ckan.action.package_patch(**payload)
-        print(results)
-        print("Changed the parameters {} from {} to {} on package {}".format(parameters, original_values, new_values, package_id))
-        success = True
-    except:
-        success = False
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        print("Error: {}".format(exc_type))
-        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-        print(''.join('!!! ' + line for line in lines))
-
-    return success
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    original_values = [get_package_parameter(site,package_id,p,API_key) for p in parameters]
+    payload = {}
+    payload['id'] = package_id
+    for parameter,new_value in zip(parameters,new_values):
+        payload[parameter] = new_value
+    results = ckan.action.package_patch(**payload)
+    print(results)
+    print("Changed the parameters {} from {} to {} on package {}".format(parameters, original_values, new_values, package_id))
 
 ##### End of dataset-scale operations #####
 def to_dict(input_ordered_dict):
