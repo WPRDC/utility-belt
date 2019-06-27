@@ -776,7 +776,7 @@ def write_or_append_to_csv(filename,list_of_dicts,keys):
 
 
 def write_to_csv(filename,list_of_dicts,keys):
-    with open(filename, 'wb') as output_file:
+    with open(filename, 'w') as output_file:
         dict_writer = csv.DictWriter(output_file, keys, extrasaction='ignore', lineterminator='\n')
         dict_writer.writeheader()
         dict_writer.writerows(list_of_dicts)
