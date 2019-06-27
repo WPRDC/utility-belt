@@ -388,7 +388,7 @@ def get_all_records(site,resource_id,API_key=None,chunk_size=5000):
        print("No data found in the datastore.")
        success = False
     while len(all_records) < row_count and failures < 5:
-        time.sleep(0.1)
+        time.sleep(0.01)
         try:
             records = get_resource_data(site,resource_id,API_key,chunk_size,offset)
             if records is not None:
