@@ -166,22 +166,14 @@ def get_site(settings,server):
     return "{}://{}".format(scheme,hostname)
 
 def get_number_of_rows(site,resource_id,API_key=None):
-# This is pretty similar to get_fields and DRYer code might take
-# advantage of that.
-
-# On other/later versions of CKAN it would make sense to use
-# the datastore_info API endpoint here, but that endpoint is
-# broken on WPRDC.org.
+    """Returns the number of rows in a datastore. Note that even when there is a limit
+    placed on the number of results a CKAN API call can return, this function will
+    still give the true number of rows."""
     try:
-        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-        results_dict = ckan.action.datastore_search(resource_id=resource_id,limit=1) # The limit
-        # must be greater than zero for this query to get the 'total' field to appear in
-        # the API response.
-        count = results_dict['total']
+        results_dict = ckan.action.datastore_info(id = resource_id)
+        return results_dict['meta']['count']
     except:
         return None
-
-    return count
 
 def get_fields(site,resource_id,API_key=None):
     # In principle, it should be possible to do this using the datastore_info
