@@ -321,6 +321,16 @@ def query_resource(site,query,API_key=None):
     #               u'total_amount': 3233.59}]
     # u'sql': u'SELECT * FROM "d1e80180-5b2e-4dab-8ec3-be621628649e" LIMIT 3'}
     data = response['records']
+
+    # Note that if a CKAN table field name is a Postgres reserverd word, you
+    # get a not-very-useful error
+    #      (e.g., 'query': ['(ProgrammingError) syntax error at or near
+    #     "on"\nLINE 1: SELECT * FROM (SELECT load, on FROM)
+    # and you need to escape the reserved field name with double quotes.
+
+    # These seem to be reserved Postgres words:
+    # ALL, ANALYSE, ANALYZE, AND, ANY, ARRAY, AS, ASC, ASYMMETRIC, AUTHORIZATION, BETWEEN, BINARY, BOTH, CASE, CAST, CHECK, COLLATE, COLUMN, CONSTRAINT, CREATE, CROSS, CURRENT_DATE, CURRENT_ROLE, CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, DEFAULT, DEFERRABLE, DESC, DISTINCT, DO, ELSE, END, EXCEPT, FALSE, FOR, FOREIGN, FREEZE, FROM, FULL, GRANT, GROUP, HAVING, ILIKE, IN, INITIALLY, INNER, INTERSECT, INTO, IS, ISNULL, JOIN, LEADING, LEFT, LIKE, LIMIT, LOCALTIME, LOCALTIMESTAMP, NATURAL, NEW, NOT, NOTNULL, NULL, OFF, OFFSET, OLD, ON, ONLY, OR, ORDER, OUTER, OVERLAPS, PLACING, PRIMARY, REFERENCES, RIGHT, SELECT, SESSION_USER, SIMILAR, SOME, SYMMETRIC, TABLE, THEN, TO, TRAILING, TRUE, UNION, UNIQUE, USER, USING, VERBOSE, WHEN, WHERE
+
     return data
 
 def query_any_resource(site,query,resource_id,API_key=None):
