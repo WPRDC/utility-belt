@@ -31,6 +31,7 @@ def obtain_resource(site,r_id,API_key,filename=None):
         metadata = get_metadata(site,r_id,API_key)
     except:
         print("Something went wrong and the resource/fields/metadata was not obtained.")
+        print("(Note that if the CKAN package is private, this function can not obtain its data through SQL queries.)")
         return False
 
     #Eliminate _id field
