@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python
 import sys, os
-import pprint
+from pprint import pprint
 import json
 
 from gadgets import write_to_csv, get_all_records, get_site, get_fields, get_metadata
@@ -65,4 +65,4 @@ def main():
 ############
 
 if __name__ == '__main__':
-  main()
+    main()
