@@ -38,12 +38,14 @@ def obtain_resource(site,r_id,API_key,filename=None):
     print("The resource has the following fields: {}".format(fields))
     write_to_csv(filename,list_of_dicts,fields)
     metaname = filename + '-metadata.json'
-    with open(metaname, 'w') as outfile:
+    with open(metaname, 'w', encoding='utf-8') as outfile:
         json.dump(metadata, outfile, indent=4, sort_keys=True)
 
     return True
 
 def main():
+    print("This script may work best under Python 3 to handle Unicode data.")
+    # see utf-8 encoding in file-opening above.
     path = os.path.dirname(os.path.realpath(__file__))
     resource_id = sys.argv[1]
     filename = None
