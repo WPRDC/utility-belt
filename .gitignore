@@ -3,3 +3,5 @@
 ckan_settings.json
 staging/
 obsolete/
+leash.py
+credentials.py

@@ -5,6 +5,7 @@ from pprint import pprint
 import json
 
 from gadgets import write_to_csv, get_all_records, get_site, get_fields, get_metadata
+from leash import fill_bowl, empty_bowl, initially_leashed
 
 def obtain_resource(site,r_id,API_key,filename=None):
     # This function pulls information from a particular resource on a
@@ -25,14 +26,23 @@ def obtain_resource(site,r_id,API_key,filename=None):
     if filename is None:
         filename = "{}.csv".format(r_id)
 
+    toggle = initially_leashed(r_id)
+    if toggle:
+        fill_bowl(r_id)
+
     try:
         list_of_dicts = get_all_records(site, r_id, API_key, chunk_size=5000)
+        print("len(list_of_dicts) = {}".format(len(list_of_dicts)))
         fields = get_fields(site,r_id,API_key)
+        print("len(fields) = {}".format(len(fields)))
         metadata = get_metadata(site,r_id,API_key)
     except:
         print("Something went wrong and the resource/fields/metadata was not obtained.")
         print("(Note that if the CKAN package is private, this function can not obtain its data through SQL queries.)")
         return False
+
+    if toggle: # Strictly speaking this may not be necessary, as bowl-emptying may have no effect on some resources.
+        empty_bowl(r_id)
 
     #Eliminate _id field
     fields.remove("_id")

@@ -14,6 +14,7 @@ except:
     from urllib.parse import urlparse # Python 3 renamed urlparse.
 
 import pprint
+from icecream import ic
 
 try:
     import datapusher
@@ -169,6 +170,7 @@ def get_number_of_rows(site,resource_id,API_key=None):
     """Returns the number of rows in a datastore. Note that even when there is a limit
     placed on the number of results a CKAN API call can return, this function will
     still give the true number of rows."""
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
     try:
         results_dict = ckan.action.datastore_info(id = resource_id)
         return results_dict['meta']['count']
