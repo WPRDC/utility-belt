@@ -776,6 +776,38 @@ def set_package_parameters_to_values(site,package_id,parameters,new_values,API_k
     print("Changed the parameters {} from {} to {} on package {}".format(parameters, original_values, new_values, package_id))
 
 ##### End of dataset-scale operations #####
+
+##### Beginning of data-dictionary operations #####
+def get_data_dictionary(site, resource_id, API_key=None):
+    try:
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        results = ckan.action.datastore_search(resource_id=resource_id)
+        return results['fields']
+    except ckanapi.errors.NotFound: # Either the resource doesn't exist, or it doesn't have a datastore.
+        return None
+
+def set_data_dictionary(site, resource_id, fields, API_key=None):
+    # Here "fields" needs to be in the same format as the data dictionary
+    # returned by get_data_dictionary: a list of type dicts and info dicts.
+    # Though the '_id" field needs to be removed for this to work.
+    if fields[0]['id'] == '_id':
+        fields = fields[1:]
+
+    # Some validation here to ensure that the fields in fields match up
+    # with the existing ones in the datastore would be nice.
+
+    # Note that a subset can be sent, and they will update part of
+    # the integrated data dictionary.
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    results = ckan.action.datastore_create(resource_id=resource_id, fields=fields, force=True)
+    # The response without force=True is
+    # ckanapi.errors.ValidationError: {'__type': 'Validation Error', 'read-only': ['Cannot edit read-only resource. Either pass"force=True" or change url-type to "datastore"']}
+    # With force=True, it works.
+
+    return results
+
+##### End of data-dictionary operations #####
+
 def to_dict(input_ordered_dict):
     return loads(dumps(input_ordered_dict))
 
