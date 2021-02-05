@@ -273,6 +273,23 @@ def get_resource_parameter(site,resource_id,parameter=None,API_key=None):
     # Note that 'size' does not seem to be defined for tabular
     # data on WPRDC.org. (It's not the number of rows in the resource.)
     ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    metadata = ckan.action.resource_show(id=resource_id)
+    if parameter is None:
+        return metadata
+    else:
+        return metadata[parameter]
+
+def get_resource_parameter_aliases(site,resource_id,parameter=None,API_key=None):
+    # Some resource parameters you can fetch with this function are
+    # 'cache_last_updated', 'package_id', 'webstore_last_updated',
+    # 'datastore_active', 'id', 'size', 'state', 'hash',
+    # 'description', 'format', 'last_modified', 'url_type',
+    # 'mimetype', 'cache_url', 'name', 'created', 'url',
+    # 'webstore_url', 'mimetype_inner', 'position',
+    # 'revision_id', 'resource_type'
+    # Note that 'size' does not seem to be defined for tabular
+    # data on WPRDC.org. (It's not the number of rows in the resource.)
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
     metadata = resource_show(ckan,resource_id)
     if parameter is None:
         return metadata
