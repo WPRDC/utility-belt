@@ -118,7 +118,6 @@ def add_aliases_to_resource(site,resource_id,API_key,aliases=[],overwrite=False)
 
 ## END OF FUNCTIONS RELATED TO DATASTORE ALIASES ##
 
-
 def resource_show(ckan,resource_id):
     # A wrapper around resource_show (which could be expanded to any resource endpoint)
     # that tries the action, and if it fails, tries to dealias the resource ID and tries
@@ -257,6 +256,11 @@ def get_package_parameter(site,package_id,parameter=None,API_key=None):
             return metadata[parameter]
         else:
             return None
+
+def delete_resource(site, resource_id, API_key=None):
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    results_dict = ckan.action.resource_delete(id=resource_id)
+    return results_dict
 
 def get_resource_parameter(site,resource_id,parameter=None,API_key=None):
     # Some resource parameters you can fetch with this function are
