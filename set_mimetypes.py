@@ -111,9 +111,9 @@ def set_mime_type(site, resource_id, new_mime_type, API_key):
 #resource_id = "313b4a63-d292-4f45-939c-26b328ac6a74"
 #new_mime_type = "application/octet-stream"
 #resource_id = "cb957b16-9945-4730-9ed9-325e230946d3"
-resource_id = "8231e3f9-050c-4805-8ded-4ba2b442ac5c"
-new_mime_type = "text/html"
-set_mime_type(site, resource_id, new_mime_type, API_key)
+#resource_id = "8231e3f9-050c-4805-8ded-4ba2b442ac5c"
+#new_mime_type = "text/html"
+#set_mime_type(site, resource_id, new_mime_type, API_key)
 
 ckan = ckanapi.RemoteCKAN(site) # Without specifying the apikey field value,
 # the next line will only return non-private packages.
@@ -203,6 +203,15 @@ for package in packages:
                 extension = extension.split('?')[0]
             if expected_extension_by_format[existing_format] is not None and extension != expected_extension_by_format[existing_format]:
                 if existing_format == 'HTML':
+                    if r['name'] == 'ArcGIS Hub Dataset':
+                        # CORRECT MIME TYPE AUTOMATICALLY
+                        new_mimetype = correct_mimetype_by_format[existing_format]
+                        print(f"{r['name']} with format {existing_format} will be changed to have MIME type {new_mimetype}.")
+                        changes += 1
+                        set_mime_type(site, r['id'], new_mimetype, API_key)
+                        time.sleep(5)
+                        # END CORRECT MIME TYPE AUTOMATICALLY
+
                     pass
                 elif existing_format == 'CSV' and len(extension) == len('cb0a4d8b-2893-4d20-ad1c-47d5fdb7e8d5'):
                     pass
@@ -212,11 +221,14 @@ for package in packages:
                     print(f"{r['name']} with format {existing_format} is not expected to have extension {extension}.")
             else: # Previously the block below was not behind this else, so some resources had their MIME types 
                 # set even though their extension was not the expected one.
+
+                # CORRECT MIME TYPE AUTOMATICALLY
                 new_mimetype = correct_mimetype_by_format[existing_format]
                 print(f"{r['name']} with format {existing_format} will be changed to have MIME type {new_mimetype}.")
                 changes += 1
                 set_mime_type(site, r['id'], new_mimetype, API_key)
                 time.sleep(5)
+                # END CORRECT MIME TYPE AUTOMATICALLY
 
         #if existing_mimetype is None:
         #    new_none_count += 1
