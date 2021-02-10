@@ -18,7 +18,7 @@ def review_package_resources(package_id=DEFAULT_TESTBED_ID):
     resources = metadata['resources']
     public_or_private = 'private' if metadata['private'] else 'public'
     ic(resources)
-   
+
     deleted = 0
     all_resources = 0
     tabular_resources = 0
@@ -209,7 +209,12 @@ for package in packages:
             extension = url.split('/')[-1].split('.')[-1]
             if len(extension) > 3:
                 extension = extension.split('?')[0]
-            if expected_extension_by_format[existing_format] is not None and extension != expected_extension_by_format[existing_format]:
+            if expected_extension_by_format[existing_format] is not None and (extension == expected_extension_by_format[existing_format] or r['datastore_active']):
+                # Previously the block below was not originally propertly logic-gated, so some resources had their MIME types
+                # set even though their extension was not the expected one.
+                changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
+            else:
+            #if expected_extension_by_format[existing_format] is not None and extension != expected_extension_by_format[existing_format]:
                 if existing_format == 'HTML':
                     if r['name'] == 'ArcGIS Hub Dataset':
                         changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
@@ -220,9 +225,6 @@ for package in packages:
                     pass
                 else:
                     print(f"{r['name']} with format {existing_format} is not expected to have extension {extension}.")
-            else: # Previously the block below was not behind this else, so some resources had their MIME types 
-                # set even though their extension was not the expected one.
-                changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
 
         #if existing_mimetype is None:
         #    new_none_count += 1
