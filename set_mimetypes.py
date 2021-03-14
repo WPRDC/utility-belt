@@ -214,7 +214,10 @@ for package in packages:
                 # set even though their extension was not the expected one.
                 changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
             else:
-            #if expected_extension_by_format[existing_format] is not None and extension != expected_extension_by_format[existing_format]:
+            #if expected_extension_by_format[existing_format] is None or extension != expected_extension_by_format[existing_format]:
+                if expected_extension_by_format[existing_format] is None and existing_format == 'Esri REST':
+                    changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
+                    pass
                 if existing_format == 'HTML':
                     if r['name'] == 'ArcGIS Hub Dataset':
                         changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
