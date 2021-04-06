@@ -219,7 +219,7 @@ for package in packages:
                     changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
                     pass
                 if existing_format == 'HTML':
-                    if r['name'] == 'ArcGIS Hub Dataset':
+                    if r['name'] == 'ArcGIS Hub Dataset' or extension == '':
                         changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
                     pass
                 elif existing_format == 'CSV' and len(extension) == len('cb0a4d8b-2893-4d20-ad1c-47d5fdb7e8d5'):
