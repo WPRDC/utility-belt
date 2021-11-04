@@ -223,8 +223,12 @@ for package in packages:
                     changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
                     pass
                 if existing_format == 'HTML':
-                    if r['name'] == 'ArcGIS Hub Dataset' or extension == '':
+                    if r['name'] == 'ArcGIS Hub Dataset' or extension == '' or 'API' in r['name'] or 'landing page' in r['name']:
                         changes = autocorrect_mime_type(r, existing_format, correct_mimetype_by_format, changes, site, API_key)
+                    else: # Google Docs (addressed above) are so far the only HTML resources that require something
+                        # other than a text/html MIME type, so let's just assume that the others are text/html for now.
+                        set_mime_type(site, r['id'], 'text/html', API_key)
+                        changes += 1
                     pass
                 elif existing_format == 'CSV' and len(extension) == len('cb0a4d8b-2893-4d20-ad1c-47d5fdb7e8d5'):
                     pass
