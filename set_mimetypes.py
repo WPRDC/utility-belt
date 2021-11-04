@@ -3,6 +3,7 @@ from credentials import site, API_key, debug_package_id as DEFAULT_TESTBED_ID
 from gadgets import get_package_parameter, get_resource_parameter, set_resource_parameters_to_values
 from icecream import ic
 from pprint import pprint
+from notify import send_notifications
 
 from collections import defaultdict
 
@@ -134,6 +135,7 @@ except:
 mimetypes_by_format = defaultdict(list)
 none_count = 0
 resource_count = 0
+possible_problems = []
 for package in packages:
     resources = package['resources']
     resource_count += len(resources)
@@ -141,6 +143,8 @@ for package in packages:
         existing_mimetype = r.get('mimetype')
         if existing_mimetype is None:
             none_count += 1
+            print(f"  {r['name']} in {package['title']} has format = {r['format']} but no MIME type value.")
+            possible_problems.append(f"{r['name']} ({r['format']}) in {package['title']}")
         existing_mimetype_inner = r.get('mimetype_inner')
         if existing_mimetype_inner is not None:
             print(f"Found mimetype_inner = {existing_mimetype_inner} for resource_id = {r['id']} and mimetype = {existing_mimetype}")
@@ -240,6 +244,14 @@ for package in packages:
 pprint(mimetypes_by_format)
 print(f"Changed {changes} resource MIME types.")
 print(f"Found {resource_count} resources. {none_count}/{resource_count} have no MIME type defined. After changes, {none_count - changes}/{resource_count} have no MIME type.")
+if none_count > 0:
+    msg = f"There are {none_count - changes} resources (out of {resource_count}) with no MIME type defined on data.wprdc.org: {', '.join(possible_problems)}"
+    print(msg)
+    if len(sys.argv) > 1:
+        if 'alert' in sys.argv[1:]:
+            if none_count - changes > 0:
+                send_notifications({'message': msg, 'username': 'set_mimetypes.py', 'channel': '@david', 'icon': ':ladder:'}, {})
+                pass
 #[ ] Find API resources and change their types to "API". Maybe for Esri REST API as well?
 # application/json for an API that is actually the API endpoint (if it returns JSON)
 # but maybe text/html for a web site that documents that API.
