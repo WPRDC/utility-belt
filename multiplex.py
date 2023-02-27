@@ -14,6 +14,7 @@ def act_on_parameter(entity, mode, parameter, parameter_value):
         return entity[parameter]
     else:
         print(f"(This is where the value of {parameter} should be set to {parameter_value}.")
+        return parameter
 
 
 def multiplex_with_functional_selection(mode, parameter, parameter_value, dataset_filter, resource_filter):
@@ -27,14 +28,14 @@ def is_uuid(s):
     import re
     return re.search('^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$', s) is not None
 
-def construct_function(pattern):
+def construct_function(pattern, obj):
     if is_uuid(pattern):
         return lambda x: True if x['id'] == pattern else None
     elif pattern == 'all':
         return lambda x: True
     else:
         import re
-        return lambda x: True if re.search(pattern, x['title']) is not None else None
+        return lambda x: True if re.search(pattern, x['title'] if obj == 'dataset' else x['name']) is not None else None
     # In principle, we might want to select on other metadata values.
         
 def multi(mode, parameter, parameter_value, dataset_selector, resource_selector):
@@ -60,8 +61,8 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector)
 
     # [ ] Which fields have non-string values (and would need to be cast)?
 
-    dataset_filter = construct_function(dataset_selector)
-    resource_filter = construct_function(resource_selector)
+    dataset_filter = construct_function(dataset_selector, 'dataset')
+    resource_filter = construct_function(resource_selector, 'resource')
 
     site = "https://data.wprdc.org"
     ckan = ckanapi.RemoteCKAN(site) # Without specifying the apikey field value,
@@ -72,26 +73,27 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector)
         time.sleep(0.01)
         packages = ckan.action.current_package_list_with_resources(limit=999999)
 
+    collected = []
     for dataset in packages:
         if resource_selector is None:
         # Operate on the dataset level
             if dataset_filter(dataset):
-                act_on_parameter(dataset, mode, parameter, parameter_value)
+                after_param = act_on_parameter(dataset, mode, parameter, parameter_value)
+                collected.append({'parameter': after_param, 'dataset': dataset, 'name': dataset['title'], 'id': dataset['id']})
+
         else:
         # Find all matching resources
             for resource in dataset['resources']:
                 if resource_filter(resource):
-                    act_on_parameter(dataset, mode, parameter, parameter_value)
-                    print(resource['name'])
-                    
+                    after_param = act_on_parameter(resource, mode, parameter, parameter_value)
+                    collected.append({'parameter': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
+
+    for c in collected:
+        print(f"{c['name']} ({c['id']}): {c['parameter']}")
+
 
     # Some package parameters you can fetch from the WPRDC with
     # this function are:
-
-
-#for resource in resources:
-#    ic(resource['url'])
-    #resource['url'] = 
 
 # A full command-line specification would be like
 # > multiplex.py change resources "DASH Data Guide" url <new url>
