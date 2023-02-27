@@ -1,6 +1,8 @@
 import argparse
 import sys, time, ckanapi
 from icecream import ic
+from gadgets import set_resource_parameters_to_values, set_package_parameters_to_values
+from credentials import site, API_key
 
 
 # Somehow apply a gadget function to multiple entities. 
@@ -9,13 +11,23 @@ from icecream import ic
 # set_resource_parameters_to_values,
 # iterating over it for different resource_id values that have resources that match a certain search term.
 
-def act_on_parameter(entity, mode, parameter, parameter_value):
+def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
     if mode == 'get':
         return entity[parameter]
     else:
+        assert mode == 'set'
         print(f"(This is where the value of {parameter} should be set to {parameter_value}.")
+        if entity_type == 'resource':
+            set_resource_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
+        elif entity_type == 'dataset':
+            set_package_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
+        elif entity_type == 'tag':
+            # So really what we want to do if entity_type == 'tag' is use the tags to find the datasets,
+            # but then operate on the datasets.
+            raise ValueError(f'Not ready to handle tags yet.')
+        else:
+            raise ValueError(f'Unknown entity_type == {entity_type}')
         return parameter
-
 
 def multiplex_with_functional_selection(mode, parameter, parameter_value, dataset_filter, resource_filter):
     # Filter by dataset and resource with the passed filter functions.
@@ -28,17 +40,17 @@ def is_uuid(s):
     import re
     return re.search('^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$', s) is not None
 
-def construct_function(pattern, obj):
+def construct_function(pattern, entity_type):
     if is_uuid(pattern):
         return lambda x: True if x['id'] == pattern else None
     elif pattern == 'all':
         return lambda x: True
     else:
         import re
-        return lambda x: True if re.search(pattern, x['title'] if obj == 'dataset' else x['name']) is not None else None
+        return lambda x: True if re.search(pattern, x['title'] if entity_type == 'dataset' else x['name']) is not None else None
     # In principle, we might want to select on other metadata values.
         
-def multi(mode, parameter, parameter_value, dataset_selector, resource_selector):
+def multi(mode, parameter, parameter_value, dataset_selector, resource_selector, tag_selector = None):
     if resource_selector is None: # It's a dataset metadata field.
         assert parameter in [ 'id', 'title', 'name', 'geographic_unit', 'owner_org', 'maintainer',
             'data_steward_email', 'relationships_as_object', 'access_level_comment',
@@ -64,7 +76,6 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector)
     dataset_filter = construct_function(dataset_selector, 'dataset')
     resource_filter = construct_function(resource_selector, 'resource')
 
-    site = "https://data.wprdc.org"
     ckan = ckanapi.RemoteCKAN(site) # Without specifying the apikey field value,
 # the next line will only return non-private packages.
     try:
@@ -73,23 +84,33 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector)
         time.sleep(0.01)
         packages = ckan.action.current_package_list_with_resources(limit=999999)
 
+    if resource_selector is None and tag_selector is None:
+        entity_type = 'dataset'
+    elif resource_selector is None:
+        entity_type = 'tag'
+        assert 0
+    else:
+        entity_type = 'dataset'
+
     collected = []
     for dataset in packages:
         if resource_selector is None:
         # Operate on the dataset level
             if dataset_filter(dataset):
-                after_param = act_on_parameter(dataset, mode, parameter, parameter_value)
+                after_param = act_on_parameter(dataset, entity_type, mode, parameter, parameter_value)
                 collected.append({'parameter': after_param, 'dataset': dataset, 'name': dataset['title'], 'id': dataset['id']})
 
         else:
         # Find all matching resources
             for resource in dataset['resources']:
                 if resource_filter(resource):
-                    after_param = act_on_parameter(resource, mode, parameter, parameter_value)
+                    after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
                     collected.append({'parameter': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
 
     for c in collected:
         print(f"{c['name']} ({c['id']}): {c['parameter']}")
+
+    print(f"{'Set' if mode == 'set' else 'Got'} parameters for {len(collected)} {entity_type}s.")
 
 
     # Some package parameters you can fetch from the WPRDC with
@@ -118,3 +139,5 @@ parser.add_argument('--resource', dest='resource_selector', default=None, requir
 
 args = parser.parse_args()
 multi(args.mode, args.parameter, args.parameter_value, args.dataset_selector, args.resource_selector)
+
+# [ ] Eventually add a --tag search.
