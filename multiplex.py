@@ -107,7 +107,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
                     after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
                     collected.append({'parameter': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
 
-    for c in collected:
+    for c in sorted(collected, key=lambda d: d['name']):
         print(f"{c['name']} ({c['id']}): {c['parameter']}")
 
     print(f"{'Set' if mode == 'set' else 'Got'} parameters for {len(collected)} {entity_type}s.")
