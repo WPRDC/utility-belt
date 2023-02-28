@@ -39,21 +39,21 @@ def is_uuid(s):
 def construct_function(pattern, entity_type):
     if is_uuid(pattern):
         return lambda x: True if x['id'] == pattern else None
-    elif pattern == 'all':
+    elif pattern in ['all', None]:
         return lambda x: True
     else:
         import re
         return lambda x: True if re.search(pattern, x['title'] if entity_type == 'dataset' else x['name']) is not None else None
     # In principle, we might want to select on other metadata values.
         
-def multi(mode, parameter, parameter_value, dataset_selector, resource_selector, tag_selector = None):
+def multi(mode, parameter, parameter_value, dataset_selector, resource_selector, tag_selector):
     if resource_selector is None: # It's a dataset metadata field.
         assert parameter in [ 'id', 'title', 'name', 'geographic_unit', 'owner_org', 'maintainer',
-            'data_steward_email', 'relationships_as_object', 'access_level_comment',
+            'tags', 'relationships_as_object', 'access_level_comment',
             'frequency_publishing', 'maintainer_email', 'num_tags',
             'metadata_created', 'group', 'metadata_modified', 'author',
             'author_email', 'state', 'version', 'department', 'license_id',
-            'type', 'resources', 'num_resources', 'data_steward_name', 'tags',
+            'type', 'resources', 'num_resources', 'data_steward_name', 'data_steward_email',
             'frequency_data_change', 'private', 'groups',
             'creator_user_id', 'relationships_as_subject', 'data_notes',
             'isopen', 'url', 'notes', 'license_title',
