@@ -21,10 +21,6 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
             set_resource_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
         elif entity_type == 'dataset':
             set_package_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
-        elif entity_type == 'tag':
-            # So really what we want to do if entity_type == 'tag' is use the tags to find the datasets,
-            # but then operate on the datasets.
-            raise ValueError(f'Not ready to handle tags yet.')
         else:
             raise ValueError(f'Unknown entity_type == {entity_type}')
         return parameter
@@ -84,28 +80,34 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
         time.sleep(0.01)
         packages = ckan.action.current_package_list_with_resources(limit=999999)
 
+    if tag_selector == 'all':
+        tag_selector = None
     if resource_selector is None and tag_selector is None:
         entity_type = 'dataset'
-    elif resource_selector is None:
-        entity_type = 'tag'
-        assert 0
-    else:
+    elif resource_selector is None and tag_selector is not None:
+        # Make a dataset_filter based on the tag.
+        dataset_filter = lambda x: tag_selector in [t['name'] for t in x['tags']]
         entity_type = 'dataset'
+    elif resource_selector is not None and tag_selector is None:
+        entity_type = 'resource'
 
     collected = []
     for dataset in packages:
-        if resource_selector is None:
+        if entity_type == 'dataset':
         # Operate on the dataset level
             if dataset_filter(dataset):
                 after_param = act_on_parameter(dataset, entity_type, mode, parameter, parameter_value)
                 collected.append({'parameter': after_param, 'dataset': dataset, 'name': dataset['title'], 'id': dataset['id']})
 
-        else:
+        elif entity_type == 'resource':
         # Find all matching resources
             for resource in dataset['resources']:
                 if resource_filter(resource):
                     after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
                     collected.append({'parameter': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
+        else:
+            assert entity_type in ['dataset', 'resource']
+
 
     for c in sorted(collected, key=lambda d: d['name']):
         print(f"{c['name']} ({c['id']}): {c['parameter']}")
@@ -136,8 +138,9 @@ parser.add_argument('--parameter', dest='parameter', default='title', required=F
 parser.add_argument('--value', dest='parameter_value', required=False, help='The parameter value to set the parameter to (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--dataset', dest='dataset_selector', default=None, required=False, help='(all|<search term to match>|<package ID>)')
 parser.add_argument('--resource', dest='resource_selector', default=None, required=False, help='(all|<search term to match>|<resource ID>)')
+parser.add_argument('--tag', dest='tag_selector', default=None, required=False, help='(all|<search term to match>)') # We could add support for tag IDs.
 
 args = parser.parse_args()
-multi(args.mode, args.parameter, args.parameter_value, args.dataset_selector, args.resource_selector)
+multi(args.mode, args.parameter, args.parameter_value, args.dataset_selector, args.resource_selector, args.tag_selector)
 
 # [ ] Eventually add a --tag search.
