@@ -23,7 +23,7 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
             set_package_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
         else:
             raise ValueError(f'Unknown entity_type == {entity_type}')
-        return parameter
+        return parameter_value
 
 def multiplex_with_functional_selection(mode, parameter, parameter_value, dataset_filter, resource_filter):
     # Filter by dataset and resource with the passed filter functions.
