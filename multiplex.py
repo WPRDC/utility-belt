@@ -25,10 +25,39 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
             raise ValueError(f'Unknown entity_type == {entity_type}')
         return parameter_value
 
-def multiplex_with_functional_selection(mode, parameter, parameter_value, dataset_filter, resource_filter):
+def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_value, dataset_filter, resource_filter):
     # Filter by dataset and resource with the passed filter functions.
     # Then based on the mode value, either select the corresponding parameter or set it to parameter_value.
-    pass
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    try:
+        packages = ckan.action.current_package_list_with_resources(limit=999999)
+    except:
+        time.sleep(0.01)
+        packages = ckan.action.current_package_list_with_resources(limit=999999)
+
+    collected = []
+    for dataset in packages:
+        if entity_type == 'dataset':
+        # Operate on the dataset level
+            if dataset_filter(dataset):
+                after_param = act_on_parameter(dataset, entity_type, mode, parameter, parameter_value)
+                collected.append({'parameter': after_param, 'dataset': dataset, 'name': dataset['title'], 'id': dataset['id']})
+
+        elif entity_type == 'resource':
+        # Find all matching resources
+            for resource in dataset['resources']:
+                if resource_filter(resource):
+                    after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
+                    collected.append({'parameter': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
+        else:
+            assert entity_type in ['dataset', 'resource']
+
+
+    for c in sorted(collected, key=lambda d: d['name']):
+        print(f"{c['name']} ({c['id']}): {c['parameter']}")
+
+    print(f"{'Set' if mode == 'set' else 'Got'} parameters for {len(collected)} {entity_type}{'s' if len(collected) != 1 else ''}.")
+    return collected
 
 def is_uuid(s):
     if s is None:
@@ -72,14 +101,6 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
     dataset_filter = construct_function(dataset_selector, 'dataset')
     resource_filter = construct_function(resource_selector, 'resource')
 
-    ckan = ckanapi.RemoteCKAN(site) # Without specifying the apikey field value,
-# the next line will only return non-private packages.
-    try:
-        packages = ckan.action.current_package_list_with_resources(limit=999999)
-    except:
-        time.sleep(0.01)
-        packages = ckan.action.current_package_list_with_resources(limit=999999)
-
     if tag_selector == 'all':
         tag_selector = None
     if resource_selector is None and tag_selector is None:
@@ -91,29 +112,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
     elif resource_selector is not None and tag_selector is None:
         entity_type = 'resource'
 
-    collected = []
-    for dataset in packages:
-        if entity_type == 'dataset':
-        # Operate on the dataset level
-            if dataset_filter(dataset):
-                after_param = act_on_parameter(dataset, entity_type, mode, parameter, parameter_value)
-                collected.append({'parameter': after_param, 'dataset': dataset, 'name': dataset['title'], 'id': dataset['id']})
-
-        elif entity_type == 'resource':
-        # Find all matching resources
-            for resource in dataset['resources']:
-                if resource_filter(resource):
-                    after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
-                    collected.append({'parameter': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
-        else:
-            assert entity_type in ['dataset', 'resource']
-
-
-    for c in sorted(collected, key=lambda d: d['name']):
-        print(f"{c['name']} ({c['id']}): {c['parameter']}")
-
-    print(f"{'Set' if mode == 'set' else 'Got'} parameters for {len(collected)} {entity_type}s.")
-
+    multiplex_with_functional_selection(mode, entity_type, parameter, parameter_value, dataset_filter, resource_filter)
 
     # Some package parameters you can fetch from the WPRDC with
     # this function are:
@@ -142,5 +141,3 @@ parser.add_argument('--tag', dest='tag_selector', default=None, required=False, 
 
 args = parser.parse_args()
 multi(args.mode, args.parameter, args.parameter_value, args.dataset_selector, args.resource_selector, args.tag_selector)
-
-# [ ] Eventually add a --tag search.
