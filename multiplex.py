@@ -10,7 +10,13 @@ from credentials import site, API_key
 # We want to invoke
 # set_resource_parameters_to_values,
 # iterating over it for different resource_id values that have resources that match a certain search term.
-
+def guess_parameter_type(parameter, value):
+    # We need to change types from the default (string) to the correct type (like Boolean).
+    if parameter in ['datastore_active', 'private', 'isopen']:
+        return bool(value)
+    if parameter in ['position']: # We shouldn't be messing with these without at least some more effort: 'num_resources', 'num_tags'
+        return int(value)
+    return value
 def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
     if mode == 'get':
         return entity[parameter]
@@ -112,6 +118,10 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
     elif resource_selector is not None and tag_selector is None:
         entity_type = 'resource'
 
+
+    if parameter is not None:
+        parameter_value = guess_parameter_type(parameter, parameter_value)
+
     multiplex_with_functional_selection(mode, entity_type, parameter, parameter_value, dataset_filter, resource_filter)
 
     # Some package parameters you can fetch from the WPRDC with
@@ -133,7 +143,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
 # > multiplex.py (set|get) <parameter> <parameter value> --dataset (all|regex|package_id) --resource (all|regex|resource_id)
 parser = argparse.ArgumentParser(description='Select dataset packages/resources to set/get parameters on')
 parser.add_argument('mode', default='get', choices=['set', 'get'], help='Either "set" or "get"')
-parser.add_argument('--parameter', dest='parameter', default='title', required=False, help='The parameter of interest (resource-level if the --resource parameter is given, else dataset-level)')
+parser.add_argument('--parameter', dest='parameter', default=None, required=False, help='The parameter of interest (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--value', dest='parameter_value', required=False, help='The parameter value to set the parameter to (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--dataset', dest='dataset_selector', default=None, required=False, help='(all|<search term to match>|<package ID>)')
 parser.add_argument('--resource', dest='resource_selector', default=None, required=False, help='(all|<search term to match>|<resource ID>)')
