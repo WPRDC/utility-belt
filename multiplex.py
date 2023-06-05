@@ -1,6 +1,7 @@
 import argparse
 import sys, time, ckanapi
 from icecream import ic
+from pprint import pprint
 from gadgets import set_resource_parameters_to_values, set_package_parameters_to_values
 from credentials import site, API_key
 
@@ -46,14 +47,22 @@ def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_
         if entity_type == 'dataset':
         # Operate on the dataset level
             if dataset_filter(dataset):
-                after_param = act_on_parameter(dataset, entity_type, mode, parameter, parameter_value)
+                if parameter is None:
+                    pprint(dataset)
+                    after_param = dataset
+                else:
+                    after_param = act_on_parameter(dataset, entity_type, mode, parameter, parameter_value)
                 collected.append({'parameter': after_param, 'dataset': dataset, 'name': dataset['title'], 'id': dataset['id']})
 
         elif entity_type == 'resource':
         # Find all matching resources
             for resource in dataset['resources']:
                 if resource_filter(resource):
-                    after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
+                    if parameter is None:
+                        pprint(resource)
+                        after_param = resource
+                    else:
+                        after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
                     collected.append({'parameter': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
         else:
             assert entity_type in ['dataset', 'resource']
@@ -93,14 +102,14 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
             'creator_user_id', 'relationships_as_subject', 'data_notes',
             'isopen', 'url', 'notes', 'license_title',
             'temporal_coverage', 'related_documents', 'license_url',
-            'organization', 'revision_id']
+            'organization', 'revision_id', None]
     else:
         assert parameter in ['id', 'cache_last_updated', 'package_id', 'webstore_last_updated',
             'datastore_active', 'size', 'state', 'hash',
             'description', 'format', 'last_modified', 'url_type',
             'mimetype', 'cache_url', 'name', 'created', 'url',
             'webstore_url', 'mimetype_inner', 'position',
-            'revision_id', 'resource_type']
+            'revision_id', 'resource_type', None]
 
     # [ ] Which fields have non-string values (and would need to be cast)?
 
