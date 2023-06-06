@@ -824,9 +824,9 @@ def value_or_blank(key,d,subfields=[]):
 
 def write_or_append_to_csv(filename,list_of_dicts,keys):
     if not os.path.isfile(filename):
-        with open(filename, 'wb') as g:
+        with open(filename, 'wb') as g: # This is still written for Python 2.
             g.write(','.join(keys)+'\n')
-    with open(filename, 'ab') as output_file:
+    with open(filename, 'ab') as output_file: # This is still written for Python 2.
         dict_writer = csv.DictWriter(output_file, keys, extrasaction='ignore', lineterminator='\n')
         #dict_writer.writeheader()
         dict_writer.writerows(list_of_dicts)
