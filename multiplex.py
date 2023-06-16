@@ -6,18 +6,31 @@ from gadgets import set_resource_parameters_to_values, set_package_parameters_to
 from credentials import site, API_key
 
 
-# Somehow apply a gadget function to multiple entities. 
+# Somehow apply a gadget function to multiple entities.
 # For instance, we need to update the links on 29 identically named resources (which are just hyperlinks).
 # We want to invoke
 # set_resource_parameters_to_values,
 # iterating over it for different resource_id values that have resources that match a certain search term.
 def guess_parameter_type(parameter, value):
     # We need to change types from the default (string) to the correct type (like Boolean).
+    if parameter in ['relationships_as_object', 'relationships_as_subject', 'groups']: # There are other
+        # lists that could be added here, like 'tags' and 'extras'.
+
+        # Note that relationships_as_object and relationships_as_subject should not need to be manually set.
+        # The correct way of setting a relationship is through the separate relationships CKAN API endpoints.
+        # I noticed that deleting one of those relationships did not result in immediate deletion of the
+        # relevant package-level metadata, but within a day they automatically updated, suggesting that there
+        # is some infrequent background process that eventually updates the package-level metadata.
+        if value is None:
+            return None
+        import json
+        return json.loads(value) # We need to convert '[]' to [] (a proper empty list)
     if parameter in ['datastore_active', 'private', 'isopen']:
         return bool(value)
     if parameter in ['position']: # We shouldn't be messing with these without at least some more effort: 'num_resources', 'num_tags'
         return int(value)
     return value
+
 def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
     if mode == 'get':
         return entity[parameter]
@@ -126,7 +139,6 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
         entity_type = 'dataset'
     elif resource_selector is not None and tag_selector is None:
         entity_type = 'resource'
-
 
     if parameter is not None:
         parameter_value = guess_parameter_type(parameter, parameter_value)
