@@ -808,6 +808,26 @@ def set_data_dictionary(site, resource_id, fields, API_key=None):
 
 ##### End of data-dictionary operations #####
 
+## Begin "extras" operations ##
+def get_value_from_extras(extras, key, default=None):
+    # Pass a default value to return if the key is not found in extras.
+
+    # The extras format is (regrettably) like this:
+    # [{'key': 'last_etl_update', 'value': '2022-11-10T21:30:48.575814'},
+    #  {'key': 'monster', 'value': 'cookie'},
+    #  {'key': 'time_field',
+    #   'value': '{"6748a534-a164-4960-b2b1-4d06c67ee9e1": "contact_date"}'}]
+
+    extracted_value = next((item['value'] for item in extras if item['key'] == key), json.dumps(default))
+    try:
+        return json.loads(extracted_value) # Handle case where the value is the JSON-encoded version
+    except json.decoder.JSONDecodeError:   # of a dict.
+        return extracted_value             # Handle all other cases.
+
+# Code for setting extras values is in rocket-etl/engine/etl_util.py
+
+## End "extras" operations ##
+
 def to_dict(input_ordered_dict):
     return loads(dumps(input_ordered_dict))
 
