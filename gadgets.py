@@ -824,7 +824,39 @@ def get_value_from_extras(extras, key, default=None):
     except json.decoder.JSONDecodeError:   # of a dict.
         return extracted_value             # Handle all other cases.
 
-# Code for setting extras values is in rocket-etl/engine/etl_util.py
+def convert_extras_dict_to_list(extras):
+    extras_list = [{'key': ekey, 'value': evalue} for ekey,evalue in extras.items()]
+    return extras_list
+
+def get_extras_dict(package):
+    if 'extras' in package:
+        extras_list = package['extras']
+        # Keep definitions and uses of extras metadata updated here:
+        # https://github.com/WPRDC/data-guide/blob/master/docs/metadata_extras.md
+
+        # The format as obtained from the CKAN API is like this:
+        #       u'extras': [{u'key': u'dcat_issued', u'value': u'2014-01-07T15:27:45.000Z'}, ...
+        # not a dict, but a list of dicts.
+        extras = {d['key']: d['value'] for d in extras_list}
+    else:
+        extras = {}
+
+    return extras
+
+def set_extra_metadata_field(site, package, key, value, API_key):
+    extras = get_extras_dict(package)
+    if type(value) != str:
+        value = json.dumps(value) # All extras keys and values need to be strings.
+    extras[key] = value
+    extras_list = convert_extras_dict_to_list(extras)
+    package = set_package_parameters_to_values(site, package['id'], ['extras'], [extras_list], API_key) # Why
+    # update the package like this? Because we just altered it, and we need to replace the cached version
+    # with the updated version or else further updates to the extras that happen during this script will be wrong.
+    return package
+
+def set_package_extras_parameter_to_value(site, package_id, subparameter, value, API_key):
+    package = get_package_parameter(site, package_id, parameter=None,API_key=API_key) # Get all package metadata.
+    package = set_extra_metadata_field(site, package, subparameter, value, API_key)
 
 ## End "extras" operations ##
 
