@@ -2,7 +2,8 @@ import argparse
 import sys, time, ckanapi, re
 from icecream import ic
 from pprint import pprint
-from gadgets import set_resource_parameters_to_values, set_package_parameters_to_values, get_value_from_extras
+from gadgets import (set_resource_parameters_to_values, set_package_parameters_to_values,
+        get_value_from_extras, set_package_extras_parameter_to_value)
 from credentials import site, API_key
 
 # Somehow apply a gadget function to multiple entities.
@@ -41,18 +42,33 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                 first = entity[params[0]]
                 if params[0] == "extras":
                     return get_value_from_extras(extras=first, key=params[1], default=None)
+                else:
+                    raise ValueError(f'act_on_parameter is not yet designed to handle parameters like {parameter}')
     else:
-        if ':' in parameter:
-            raise ValueError("act_on_parameter has not been coded to set parameters")
-
         assert mode == 'set'
         print(f"(This is where the value of {parameter} should be set to {parameter_value}.)")
         if entity_type == 'resource':
             set_resource_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
         elif entity_type == 'dataset':
-            set_package_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
+            if ':' in parameter: # Handle sub-parameters (for "extras")
+                params = parameter.split(':')
+                if len(params) == 2:
+                    first = entity.get(params[0], {}) # The assumption here is that
+                    # the first-level parameter should be a dictionary (if it's not there
+                    # at all. This is true for the "extras" field, but should be reconsidered
+                    # for others.
+                    assert params[0] == "extras"
+                    if params[0] == "extras":
+                        package = set_package_extras_parameter_to_value(site, entity['id'], params[1], parameter_value, API_key)
+                        new_value = get_value_from_extras(extras = package['extras'], key=params[0], default=None)
+                        return new_value
+                    else:
+                        raise ValueError(f'act_on_parameter is not yet designed to handle parameters like {parameter}')
+                else:
+                    raise ValueError(f'act_on_parameter is not yet designed to handle {len(params)} parameters like in {parameter}')
         else:
             raise ValueError(f'Unknown entity_type == {entity_type}')
+
         return parameter_value
 
 def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_value, dataset_filter, resource_filter):
@@ -115,7 +131,7 @@ def construct_function(pattern, entity_type):
 
         return lambda x: True if re.search(pattern, x['title'] if entity_type == 'dataset' else x['name']) is not None else None
     # In principle, we might want to select on other metadata values.
-        
+
 def multi(mode, parameter, parameter_value, dataset_selector, resource_selector, tag_selector):
     if resource_selector is None: # It's a dataset metadata field.
         assert (parameter in [ 'id', 'title', 'name', 'geographic_unit', 'owner_org', 'maintainer',
