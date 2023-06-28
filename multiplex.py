@@ -1,10 +1,9 @@
 import argparse
-import sys, time, ckanapi
+import sys, time, ckanapi, re
 from icecream import ic
 from pprint import pprint
-from gadgets import set_resource_parameters_to_values, set_package_parameters_to_values
+from gadgets import set_resource_parameters_to_values, set_package_parameters_to_values, get_value_from_extras
 from credentials import site, API_key
-
 
 # Somehow apply a gadget function to multiple entities.
 # For instance, we need to update the links on 29 identically named resources (which are just hyperlinks).
@@ -34,8 +33,18 @@ def guess_parameter_type(parameter, value):
 
 def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
     if mode == 'get':
-        return entity[parameter]
+        if ':' not in parameter:
+            return entity[parameter]
+        else: # Handle sub-parameters (for "extras")
+            params = parameter.split(':')
+            if len(params) == 2:
+                first = entity[params[0]]
+                if params[0] == "extras":
+                    return get_value_from_extras(extras=first, key=params[1], default=None)
     else:
+        if ':' in parameter:
+            raise ValueError("act_on_parameter has not been coded to set parameters")
+
         assert mode == 'set'
         print(f"(This is where the value of {parameter} should be set to {parameter_value}.)")
         if entity_type == 'resource':
@@ -109,7 +118,7 @@ def construct_function(pattern, entity_type):
         
 def multi(mode, parameter, parameter_value, dataset_selector, resource_selector, tag_selector):
     if resource_selector is None: # It's a dataset metadata field.
-        assert parameter in [ 'id', 'title', 'name', 'geographic_unit', 'owner_org', 'maintainer',
+        assert (parameter in [ 'id', 'title', 'name', 'geographic_unit', 'owner_org', 'maintainer',
             'tags', 'relationships_as_object', 'access_level_comment',
             'frequency_publishing', 'maintainer_email', 'num_tags',
             'metadata_created', 'group', 'metadata_modified', 'author',
@@ -119,7 +128,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
             'creator_user_id', 'relationships_as_subject', 'data_notes',
             'isopen', 'url', 'notes', 'license_title',
             'temporal_coverage', 'related_documents', 'license_url',
-            'organization', 'revision_id', None]
+            'organization', 'revision_id', 'extras', None]) or re.match('extras:', parameter)
     else:
         assert parameter in ['id', 'cache_last_updated', 'package_id', 'webstore_last_updated',
             'datastore_active', 'size', 'state', 'hash',
