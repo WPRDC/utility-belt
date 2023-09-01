@@ -602,6 +602,7 @@ def set_resource_parameters_to_values(site,resource_id,parameters,new_values,API
     results = ckan.action.resource_patch(**payload)
     print(results)
     print("Changed the parameters {} from {} to {} on resource {}".format(parameters, original_values, new_values, resource_id))
+    return results # Return the modified resource dict.
 
 # Comment out this function since it's not working as intended yet.
 #def recast_field(site,resource_id,field,new_type,API_key):
@@ -774,6 +775,7 @@ def set_package_parameters_to_values(site,package_id,parameters,new_values,API_k
     results = ckan.action.package_patch(**payload)
     print(results)
     print("Changed the parameters {} from {} to {} on package {}".format(parameters, original_values, new_values, package_id))
+    return results # Return the revised package dict.
 
 ##### End of dataset-scale operations #####
 
@@ -857,6 +859,7 @@ def set_extra_metadata_field(site, package, key, value, API_key):
 def set_package_extras_parameter_to_value(site, package_id, subparameter, value, API_key):
     package = get_package_parameter(site, package_id, parameter=None,API_key=API_key) # Get all package metadata.
     package = set_extra_metadata_field(site, package, subparameter, value, API_key)
+    return package
 
 ## End "extras" operations ##
 
