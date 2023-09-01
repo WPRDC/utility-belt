@@ -44,8 +44,7 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                     return get_value_from_extras(extras=first, key=params[1], default=None)
                 else:
                     raise ValueError(f'act_on_parameter is not yet designed to handle parameters like {parameter}')
-    else:
-        assert mode == 'set'
+    elif mode == 'set':
         print(f"(This is where the value of {parameter} should be set to {parameter_value}.)")
         if entity_type == 'resource':
             set_resource_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
@@ -69,7 +68,24 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
         else:
             raise ValueError(f'Unknown entity_type == {entity_type}')
 
-        return parameter_value
+        return parameter_value # Why are we returning this? Does it get changed somewhere?
+
+    elif mode == 'delete':
+        if ':' not in parameter or parameter.split(':')[0] != 'extras':
+            raise ValueError(f'Not programmed to handle deleting parameters like "{parameter}".')
+        params = parameter.split(':')
+        key = params[1]
+        assert entity_type == 'dataset' # Since resources don't have extras metadata.
+        assert len(params) == 2
+        assert params[0] == "extras"
+        extras_list = entity.get(params[0], {}) # The assumption here is that
+        # the first-level parameter should be a dictionary (if it's not there
+        # at all. This is true for the "extras" field, but should be reconsidered
+        # for others.
+        new_extras_list = [d for d in extras_list if d['key'] != key]
+        package = set_package_parameters_to_values(site, entity['id'], ['extras'], [new_extras_list], API_key)
+    else:
+        raise ValueError(f'Unknown mode == {mode}')
 
 def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_value, dataset_filter, resource_filter):
     # Filter by dataset and resource with the passed filter functions.
@@ -192,7 +208,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
 
 # > multiplex.py (set|get) <parameter> <parameter value> --dataset (all|regex|package_id) --resource (all|regex|resource_id)
 parser = argparse.ArgumentParser(description='Select dataset packages/resources to set/get parameters on')
-parser.add_argument('mode', default='get', choices=['set', 'get'], help='Either "set" or "get"')
+parser.add_argument('mode', default='get', choices=['set', 'get', 'delete'], help='Either "set" or "get" (or "delete" for extras keys).')
 parser.add_argument('--parameter', dest='parameter', default=None, required=False, help='The parameter of interest (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--value', dest='parameter_value', required=False, help='The parameter value to set the parameter to (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--dataset', dest='dataset_selector', default=None, required=False, help='(all|<search term to match>|<package ID or name>)')
