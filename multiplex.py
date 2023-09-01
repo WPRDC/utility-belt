@@ -108,7 +108,7 @@ def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_
 
 
     for c in sorted(collected, key=lambda d: d['name']):
-        print(f"{c['name']} ({c['id']}): {c['parameter']}")
+        print(f"{c['name']} ({c['id']}){'' if parameter is None else '[' + parameter + ']'}: {c['parameter']}")
 
     print(f"{'Set' if mode == 'set' else 'Got'} parameters for {len(collected)} {entity_type}{'s' if len(collected) != 1 else ''}.")
     return collected
