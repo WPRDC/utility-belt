@@ -107,7 +107,7 @@ def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_
                     after_param = dataset
                 else:
                     after_param = act_on_parameter(dataset, entity_type, mode, parameter, parameter_value)
-                collected.append({'parameter': after_param, 'dataset': dataset, 'name': dataset['title'], 'id': dataset['id']})
+                collected.append({'parameter_val': after_param, 'dataset': dataset, 'name': dataset['title'], 'id': dataset['id']})
 
         elif entity_type == 'resource':
         # Find all matching resources
@@ -118,13 +118,13 @@ def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_
                         after_param = resource
                     else:
                         after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
-                    collected.append({'parameter': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
+                    collected.append({'parameter_val': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
         else:
             assert entity_type in ['dataset', 'resource']
 
 
     for c in sorted(collected, key=lambda d: d['name']):
-        print(f"{c['name']} ({c['id']}){'' if parameter is None else '[' + parameter + ']'}: {c['parameter']}")
+        print(f"{c['name']} ({c['id']}){'' if parameter is None else '[' + parameter + ']'}: {c['parameter_val']}")
 
     print(f"{'Set' if mode == 'set' else 'Got'} parameters for {len(collected)} {entity_type}{'s' if len(collected) != 1 else ''}.")
     return collected
