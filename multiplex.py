@@ -60,7 +60,7 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                     assert params[0] == "extras"
                     if params[0] == "extras":
                         package = set_package_extras_parameter_to_value(site, entity['id'], params[1], parameter_value, API_key)
-                        new_value = get_value_from_extras(extras = package['extras'], key=params[0], default=None)
+                        new_value = get_value_from_extras(extras = package['extras'], key=params[1], default=None)
                         return new_value
                     else:
                         raise ValueError(f'act_on_parameter is not yet designed to handle parameters like {parameter}')
