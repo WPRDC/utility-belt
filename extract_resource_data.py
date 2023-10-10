@@ -4,10 +4,10 @@ import sys, os
 from pprint import pprint
 import json
 
-from gadgets import write_to_csv, get_all_records, get_site, get_fields, get_metadata
-from leash import fill_bowl, empty_bowl, initially_leashed
+from gadgets import write_to_csv, get_all_records, get_fields, get_metadata
+from icecream import ic
 
-def obtain_resource(site,r_id,API_key,filename=None):
+def obtain_resource(site, r_id, API_key, filename=None):
     # This function pulls information from a particular resource on a
     # CKAN instance and outputs it to a CSV file.
 
@@ -23,12 +23,11 @@ def obtain_resource(site,r_id,API_key,filename=None):
     # so probably some work on character encoding is in order in the
     # Python script.
 
+    metadata = get_metadata(site,r_id,API_key)
+    ic(metadata)
+
     if filename is None:
         filename = "{}.csv".format(r_id)
-
-    toggle = initially_leashed(r_id)
-    if toggle:
-        fill_bowl(r_id)
 
     try:
         list_of_dicts = get_all_records(site, r_id, API_key, chunk_size=5000)
@@ -38,11 +37,8 @@ def obtain_resource(site,r_id,API_key,filename=None):
         metadata = get_metadata(site,r_id,API_key)
     except:
         print("Something went wrong and the resource/fields/metadata was not obtained.")
-        print("(Note that if the CKAN package is private, this function can not obtain its data through SQL queries.)")
+        print("(Note that if the CKAN package is private, this function can not obtain its data through SQL queries in older versions of CKAN.)")
         return False
-
-    if toggle: # Strictly speaking this may not be necessary, as bowl-emptying may have no effect on some resources.
-        empty_bowl(r_id)
 
     #Eliminate _id field
     fields.remove("_id")
@@ -62,18 +58,9 @@ def main():
     filename = None
     if len(sys.argv) > 2:
         filename = sys.argv[2]
-    server = "Live"
 
-    settings_file = '/ckan_settings.json'
-    if len(sys.argv) > 3:
-        settings_file = sys.argv[3]
-
-    with open(path+settings_file) as f:
-        settings = json.load(f)
-        API_key = settings["API Keys"][server]
-        site = get_site(settings,server)
-
-    success = obtain_resource(site,resource_id,API_key,filename)
+    from credentials import API_key, site
+    success = obtain_resource(site, resource_id, API_key, filename)
 
 ############
 
