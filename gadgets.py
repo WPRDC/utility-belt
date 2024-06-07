@@ -867,6 +867,50 @@ def set_package_extras_parameter_to_value(site, package_id, subparameter, value,
 
 ## End "extras" operations ##
 
+## Begin groups operations ##
+def get_group_list(site):
+    ckan = ckanapi.RemoteCKAN(site)
+    group_names = ckan.action.group_list(all_fields=False)
+    groups = ckan.action.group_list(all_fields=True)
+    return group_names, groups
+
+def clear_package_groups(site, package, package_id, API_key):
+    package = set_package_parameters_to_values(site, package_id, ['groups'], [[]], API_key=API_key)
+    return package
+
+def assign_package_to_group(site, package, package_id, group_name, API_key):
+    # Come to think of it, this logic could be used to assign tags, too.
+    group_names, groups = get_group_list(site)
+    assert group_name in group_names
+    # "groups (list of dictionaries) – the groups to which the dataset belongs
+    # (optional), each group dictionary should have one or more of the
+    # following keys which identify an existing group: 'id' (the id of the
+    # group, string), or 'name' (the name of the group, string), to see which
+    # groups exist call group_list()"
+    # In concrete terms, a dataset assigned to one group has a `groups` value like:
+    #   [{'description': '', 'display_name': 'Health', 'id': 'f6c25894-f744-4c6a-8290-3491d8e81628', 'image_display_url': 'https://data.wprdc.org/uploads/group/2015-10-06-155719.393289health.png', 'name': 'health', 'title': 'Health'}]
+    assigned_groups = package['groups']
+    if group_name in [g['name'] for g in assigned_groups]:
+        print(f'The group "{group_name}" is already in the list of groups assigned to the dataset.')
+    else:
+        #selected_group = [group for group in groups if group['name'] == group_name][0]
+        new_groups = assigned_groups + [{'name': group_name}] # It seems like this is enough, because CKAN
+        # then retrieves a few other parameters (like title) and adds them.
+        package = set_package_parameters_to_values(site, package_id, ['groups'], [new_groups], API_key=API_key)
+    return package
+## End groups operations ##
+
+def add_tag(package, tag='_etl'): # Code from rocket... not yet used here.
+    tag_dicts = package['tags']
+    tags = [td['name'] for td in tag_dicts]
+    if tag not in tags:
+        from engine.parameters.remote_parameters import site, API_key
+        ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+        new_tag_dict = {'name': tag}
+        tag_dicts.append(new_tag_dict)
+        package = set_package_parameters_to_values(site,package['id'],['tags'],[tag_dicts],API_key)
+    return package
+
 def to_dict(input_ordered_dict):
     return loads(dumps(input_ordered_dict))
 
