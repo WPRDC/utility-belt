@@ -79,10 +79,10 @@ def fire_grappling_hook(filepath='ckan_settings.json',server='Stage'):
 
 
 ## FUNCTIONS RELATED TO DATASTORE ALIASES ##
-def get_resource_aliases(site,resource_id):
+def get_resource_aliases(resource_id, site, API_key):
     # If a resource ID is an alias for the real resource ID, this function will
     # convert the pseudonym into the real resource ID and return it.
-    ckan = ckanapi.RemoteCKAN(site)
+    ckan = ckanapi.RemoteCKAN(site, API_key)
     results = ckan.action.datastore_search(id='_table_metadata',filters={'alias_of':resource_id})['records']
     known_aliases = [r['name'] for r in results]
     return known_aliases
@@ -105,7 +105,7 @@ def add_aliases_to_resource(site,resource_id,API_key,aliases=[],overwrite=False)
     # aliases with the ones passed in the aliases argument.
     if not overwrite:
         # Get existing aliases.
-        known_aliases = get_resource_aliases(site,resource_id)
+        known_aliases = get_resource_aliases(resource_id, site, API_key)
         # Add new aliases to existing aliases.
         if type(aliases) == list:
             aliases = known_aliases + aliases
