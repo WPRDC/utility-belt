@@ -91,6 +91,17 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                         raise ValueError(f'act_on_parameter is not yet designed to handle parameters like {parameter}')
                 else:
                     raise ValueError(f'act_on_parameter is not yet designed to handle {len(params)} parameters like in {parameter}')
+            else:
+                if parameter == 'groups':
+                    values = parameter_value.split('|')
+                    clear_groups(site, package, package_id, API_key)
+                    new_values = []
+                    for value in values:
+                        package = assign_package_to_group(site, entity, entity['id'], parameter_value, API_key)
+                        new_values.append(get_package_parameter(site, package_id, parameter=param, API_key=API_key))
+                    return new_values
+                else:
+                    raise ValueError(f'act_on_parameter is not yet designed to set dataset parameters like {parameter}')
         else:
             raise ValueError(f'Unknown entity_type == {entity_type}')
 
