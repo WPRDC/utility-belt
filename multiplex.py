@@ -3,7 +3,9 @@ import sys, time, ckanapi, re
 from icecream import ic
 from pprint import pprint
 from gadgets import (set_resource_parameters_to_values, set_package_parameters_to_values,
-        get_value_from_extras, set_package_extras_parameter_to_value)
+        get_value_from_extras, set_package_extras_parameter_to_value,
+        get_package_parameter,
+        clear_package_groups, assign_package_to_group)
 from credentials import site, API_key
 
 # Somehow apply a gadget function to multiple entities.
@@ -11,7 +13,7 @@ from credentials import site, API_key
 # We want to invoke
 # set_resource_parameters_to_values,
 # iterating over it for different resource_id values that have resources that match a certain search term.
-def guess_parameter_type(parameter, value):
+def guess_parameter_type(parameter, value, mode):
     # We need to change types from the default (string) to the correct type (like Boolean).
     if value in ['None', 'null']:
         print("Coercing parameter to a null value.")
@@ -24,8 +26,16 @@ def guess_parameter_type(parameter, value):
         # I noticed that deleting one of those relationships did not result in immediate deletion of the
         # relevant package-level metadata, but within a day they automatically updated, suggesting that there
         # is some infrequent background process that eventually updates the package-level metadata.
-        import json
-        return json.loads(value) # We need to convert '[]' to [] (a proper empty list)
+
+        # Since groups and tags are strictly lists, it seems more convenient sometimes to use 'add' mode,
+        # to add a new element to the list.
+        if mode == 'add':
+            return value
+        else:
+            if value is None:
+                return value
+            import json
+            return json.loads(value) # We need to convert '[]' to [] (a proper empty list)
     if parameter in ['datastore_active', 'private', 'isopen']:
         return bool(value)
     if parameter in ['position']: # We shouldn't be messing with these without at least some more effort: 'num_resources', 'num_tags'
@@ -44,6 +54,16 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                     return get_value_from_extras(extras=first, key=params[1], default=None)
                 else:
                     raise ValueError(f'act_on_parameter is not yet designed to handle parameters like {parameter}')
+    elif mode == 'add':
+        if entity_type == 'dataset':
+            if parameter == 'groups':
+                package = assign_package_to_group(site, entity, entity['id'], parameter_value, API_key)
+                new_value = get_package_parameter(site, entity['id'], parameter=parameter, API_key=API_key)
+                return new_value
+            else:
+                raise ValueError(f'act_on_parameter is not yet designed to add dataset parameters like {parameter}')
+        else:
+            raise ValueError(f'act_on_parameter is not yet designed to add to entities of type {entity_type}')
     elif mode == 'set':
         print(f"(This is where the value of {parameter} should be set to {parameter_value}.)")
         if entity_type == 'resource':
@@ -186,7 +206,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
         entity_type = 'resource'
 
     if parameter is not None:
-        parameter_value = guess_parameter_type(parameter, parameter_value)
+        parameter_value = guess_parameter_type(parameter, parameter_value, mode)
 
     multiplex_with_functional_selection(mode, entity_type, parameter, parameter_value, dataset_filter, resource_filter)
 
@@ -208,7 +228,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
 
 # > multiplex.py (set|get) <parameter> <parameter value> --dataset (all|regex|package_id) --resource (all|regex|resource_id)
 parser = argparse.ArgumentParser(description='Select dataset packages/resources to set/get parameters on')
-parser.add_argument('mode', default='get', choices=['set', 'get', 'delete'], help='Either "set" or "get" (or "delete" for extras keys).')
+parser.add_argument('mode', default='get', choices=['set', 'get', 'add', 'delete'], help='Either "set" or "get" or "add" (or "delete" for extras keys).')
 parser.add_argument('--parameter', dest='parameter', default=None, required=False, help='The parameter of interest (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--value', dest='parameter_value', required=False, help='The parameter value to set the parameter to (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--dataset', dest='dataset_selector', default=None, required=False, help='(all|<search term to match>|<package ID or name>)')
