@@ -37,7 +37,13 @@ def guess_parameter_type(parameter, value, mode):
             import json
             return json.loads(value) # We need to convert '[]' to [] (a proper empty list)
     if parameter in ['datastore_active', 'private', 'isopen']:
-        return bool(value)
+        if value in ['False', 'false']:
+            return False
+        elif value in ['True', 'true']:
+            return True
+        else:
+            raise ValueError(f"guess_parameter_type doesn't know what to do for parameter == {parameter} and value == {value}.")
+        #return bool(value) # Doesn't work for False values.
     if parameter in ['position']: # We shouldn't be messing with these without at least some more effort: 'num_resources', 'num_tags'
         return int(value)
     return value
