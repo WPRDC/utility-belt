@@ -273,7 +273,11 @@ def get_resource_parameter(site,resource_id,parameter=None,API_key=None):
     # Note that 'size' does not seem to be defined for tabular
     # data on WPRDC.org. (It's not the number of rows in the resource.)
     ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
-    metadata = ckan.action.resource_show(name_or_id=resource_id)
+    try:
+        metadata = ckan.action.resource_show(name_or_id=resource_id)
+    except ckanapi.errors.ValidationError: # Using name_or_id was an undocumented feature for a while, but
+    # it seems to have been dropped (at least, it's no longer working).
+        metadata = ckan.action.resource_show(id=resource_id)
     if parameter is None:
         return metadata
     else:
