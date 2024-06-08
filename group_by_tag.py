@@ -1,5 +1,5 @@
 # This script lets the user specify a CKAN tag and (optionally) a CKAN group,
-# and it will then find all the datasets with that tag and add them to the associated group 
+# and it will then find all the datasets with that tag and add them to the associated group
 # (defaulting to a group with the same name as the tag).
 # So
 # > python group_by_tag.py health
@@ -22,20 +22,33 @@ ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         tag_name = group_name = sys.argv[1]
-        group_names, groups = get_group_list(site)
-        assert group_name in group_names
+    elif len(sys.argv) == 3:
+        tag_name = sys.argv[1]
+        group_name = sys.argv[2]
+    else:
+        print("""Try either
+    > python group_by_tag.py <tag name that is also a group name>
+or
+    > python group_by_tag.py <tag name> <group name>
+    """)
+        raise ValueError(f'Unprepared to parse {len(sys.argv) - 1} arguments.')
 
-        MAX_ROWS = 1000
-        response = ckan.action.package_search(fq=f'tags:{tag_name}', rows=MAX_ROWS)
-        packages = response['results']
-        if len(packages) == MAX_ROWS:
-            raise ValueError("package_search results are being limited to {MAX_ROWS}. Check for more!")
-        print(f'Found {len(packages)} datasets with tag {tag_name}')
+    group_names, groups = get_group_list(site)
+    assert group_name in group_names
+    print(f"valid group names: {', '.join(group_names)}")
+
+    ic(tag_name, group_name)
+    MAX_ROWS = 1000
+    response = ckan.action.package_search(fq=f'tags:{tag_name}', rows=MAX_ROWS)
+    packages = response['results']
+    if len(packages) == MAX_ROWS:
+        raise ValueError("package_search results are being limited to {MAX_ROWS}. Check for more!")
+    print(f'Found {len(packages)} datasets with tag {tag_name}')
+    for package in packages:
+        print(f"{'[private] ' if package['private'] else ''}{package['title']:<50.50} {[g['name'] for g in package['groups']]}")
+    do_it = input(f"Assign these {len(packages)} datasets to the {group_name} group? (y/n) ")
+    if do_it.lower() == 'y':
         for package in packages:
-            print(f"{'[private] ' if package['private'] else ''}{package['title']:<50.50} {[g['name'] for g in package['groups']]}")
-        do_it = input(f"Assign these {len(packages)} datasets to the {group_name} group? (y/n) ")
-        if do_it.lower() == 'y':
-            for package in packages:
-                assign_package_to_group(site, package, package['id'], group_name, API_key)
-        print('Done.')
+            assign_package_to_group(site, package, package['id'], group_name, API_key)
+    print('Done.')
 
