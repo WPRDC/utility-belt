@@ -39,16 +39,17 @@ or
 
     ic(tag_name, group_name)
     MAX_ROWS = 1000
-    response = ckan.action.package_search(fq=f'tags:{tag_name}', rows=MAX_ROWS)
+    response = ckan.action.package_search(fq=f'tags:"{tag_name}"', rows=MAX_ROWS)
     packages = response['results']
     if len(packages) == MAX_ROWS:
         raise ValueError("package_search results are being limited to {MAX_ROWS}. Check for more!")
     print(f'Found {len(packages)} datasets with tag {tag_name}')
-    for package in packages:
-        print(f"{'[private] ' if package['private'] else ''}{package['title']:<50.50} {[g['name'] for g in package['groups']]}")
-    do_it = input(f"Assign these {len(packages)} datasets to the {group_name} group? (y/n) ")
-    if do_it.lower() == 'y':
+    if len(packages) > 0:
         for package in packages:
-            assign_package_to_group(site, package, package['id'], group_name, API_key)
-    print('Done.')
+            print(f"{'[private] ' if package['private'] else ''}{package['title']:<50.50} {[g['name'] for g in package['groups']]}")
+        do_it = input(f"Assign these {len(packages)} datasets to the {group_name} group? (y/n) ")
+        if do_it.lower() == 'y':
+            for package in packages:
+                assign_package_to_group(site, package, package['id'], group_name, API_key)
+            print('Done.')
 
