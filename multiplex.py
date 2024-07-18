@@ -105,13 +105,14 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                 else:
                     raise ValueError(f'act_on_parameter is not yet designed to handle {len(params)} parameters like in {parameter}')
             else:
-                if parameter == 'groups':
+                if parameter == 'groups' and entity_type == 'dataset':
                     values = parameter_value.split('|')
-                    clear_groups(site, package, package_id, API_key)
-                    new_values = []
+                    package = entity
+                    package_id = package['id']
+                    clear_package_groups(site, package, package_id, API_key)
                     for value in values:
-                        package = assign_package_to_group(site, entity, entity['id'], parameter_value, API_key)
-                        new_values.append(get_package_parameter(site, package_id, parameter=param, API_key=API_key))
+                        package = assign_package_to_group(site, package, package_id, parameter_value, API_key)
+                    new_values = get_package_parameter(site, package_id, parameter=parameter, API_key=API_key)
                     return new_values
                 else:
                     raise ValueError(f'act_on_parameter is not yet designed to set dataset parameters like {parameter}')
