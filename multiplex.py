@@ -5,7 +5,8 @@ from pprint import pprint
 from gadgets import (set_resource_parameters_to_values, set_package_parameters_to_values,
         get_value_from_extras, set_package_extras_parameter_to_value,
         get_package_parameter,
-        clear_package_groups, assign_package_to_group)
+        clear_package_groups, assign_package_to_group,
+        add_view)
 from credentials import site, API_key
 
 # Somehow apply a gadget function to multiple entities.
@@ -70,6 +71,15 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                 raise ValueError(f'act_on_parameter is not yet designed to add dataset parameters like {parameter}')
         else:
             raise ValueError(f'act_on_parameter is not yet designed to add to entities of type {entity_type}')
+    elif mode == 'add_view':
+        if entity_type == 'resource':
+            if parameter_value in ['pdf_view', 'geo_view', 'text_view', 'webpage_view', 'image_view', 'datatables_view']:
+                view = add_view(entity['id'], parameter_value)
+                return view
+            else:
+                raise ValueError(f'act_on_parameter is not yet designed to add views like {parameter_value}')
+        else:
+            raise ValueError(f'act_on_parameter is not yet designed to add views to entities of type {entity_type}')
     elif mode == 'set':
         print(f"(This is where the value of {parameter} should be set to {parameter_value}.)")
         if entity_type == 'resource':
@@ -204,7 +214,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
             'description', 'format', 'last_modified', 'url_type',
             'mimetype', 'cache_url', 'name', 'created', 'url',
             'webstore_url', 'mimetype_inner', 'position',
-            'revision_id', 'resource_type', None]
+            'revision_id', 'resource_type', None] + ['view_type']
 
     # [ ] Which fields have non-string values (and would need to be cast)?
 
@@ -245,8 +255,8 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
 
 # > multiplex.py (set|get) <parameter> <parameter value> --dataset (all|regex|package_id) --resource (all|regex|resource_id)
 parser = argparse.ArgumentParser(description='Select dataset packages/resources to set/get parameters on')
-parser.add_argument('mode', default='get', choices=['set', 'get', 'add', 'delete'], help='Either "set" or "get" or "add" (or "delete" for extras keys).')
-parser.add_argument('--parameter', dest='parameter', default=None, required=False, help='The parameter of interest (resource-level if the --resource parameter is given, else dataset-level)')
+parser.add_argument('mode', default='get', choices=['set', 'get', 'add', 'delete', 'add_view'], help='Either "set" or "get" or "add" (or "delete" for extras keys) or "add_view".')
+parser.add_argument('--parameter', dest='parameter', default=None, required=False, help='The parameter of interest (resource-level if the --resource parameter is given, else dataset-level). [Use "view_type" with add_view.]')
 parser.add_argument('--value', dest='parameter_value', required=False, help='The parameter value to set the parameter to (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--dataset', dest='dataset_selector', default=None, required=False, help='(all|<search term to match>|<package ID or name>)')
 parser.add_argument('--resource', dest='resource_selector', default=None, required=False, help='(all|<search term to match>|<resource ID>)')
