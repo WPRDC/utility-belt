@@ -35,8 +35,11 @@ def guess_parameter_type(parameter, value, mode):
         else:
             if value is None:
                 return value
-            import json
-            return json.loads(value) # We need to convert '[]' to [] (a proper empty list)
+            if value[0] in ['[', '{']:
+                import json
+                return json.loads(value) # We need to convert '[]' to [] (a proper empty list)
+            return value
+
     if parameter in ['datastore_active', 'private', 'isopen']:
         if value in ['False', 'false']:
             return False
