@@ -765,7 +765,157 @@ def clone_resource(site,source_resource_id,API_key,destination_package_id=None):
     return success
 
 ##### End of resource-scale operations #####
+##### Begin of views operations #####
 
+def get_resource_by_id(resource_id):
+    """Get all metadata for a given resource."""
+    from credentials import site, API_key
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    return ckan.action.resource_show(id=resource_id)
+
+def add_datatable_view(resource_id):
+    from credentials import site, API_key
+    BASE_URL = f'{site}/api/3/action/'
+    resource = get_resource_by_id(resource_id)
+    r = requests.post(
+        BASE_URL + 'resource_create_default_resource_views',
+        json={
+            'resource': resource,
+            'create_datastore_views': True
+        },
+        headers={
+            'Authorization': API_KEY,
+            'Content-Type': 'application/json'
+        }
+    )
+    print(r.json())
+    return r.json()['result']
+
+def configure_datatable(view):
+    # setup new view
+    from credentials import site, API_key
+    BASE_URL = f'{site}/api/3/action/'
+    view['col_reorder'] = True
+    view['export_buttons'] = True
+    view['responsive'] = False
+    r = requests.post(BASE_URL + 'resource_view_update', json=view, headers={"Authorization": API_KEY})
+
+def create_data_table_view(resource_id):
+#    [{'col_reorder': False,
+#      'description': '',
+#      'export_buttons': False,
+#      'filterable': True,
+#      'fixed_columns': False,
+#      'id': '05a49a72-cb9b-4bfd-aa10-ab3655b541ac',
+#      'package_id': '812527ad-befc-4214-a4d3-e621d8230563',
+#      'resource_id': '117a09dd-dbe2-44c2-9553-46a05ad3f73e',
+#      'responsive': False,
+#      'show_fields': ['_id',
+#                      'facility',
+#                      'run_date',
+#                      'gender_race_group',
+#                      'patient_count',
+#                      'gender',
+#                      'race'],
+#      'title': 'Data Table',
+#      'view_type': 'datatables_view'}]
+
+#    from engine.parameters.remote_parameters import site, API_key
+#    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+#    extant_views = ckan.action.resource_view_list(id=resource_id)
+#    title = 'Data Table'
+#    if title not in [v['title'] for v in extant_views]:
+#        # CKAN's API can't accept nested JSON to enable the config parameter to be
+#        # used to set export_buttons and col_reorder options.
+#        # https://github.com/ckan/ckan/issues/2655
+#        config_dict = {'export_buttons': True, 'col_reorder': True}
+#        #result = ckan.action.resource_view_create(resource_id = resource_id, title="Data Table", view_type='datatables_view', config=json.dumps(config_dict))
+#        result = ckan.action.resource_view_create(resource_id=resource_id, title="Data Table", view_type='datatables_view')
+
+        #r = requests.get(BASE_URL + 'package_show', params={'id': package_id})
+        #resources = r.json()['result']['resources']
+
+        #good_resources = [resource for resource in resources
+        #                  if resource['format'].lower() == 'csv' and resource['url_type'] in ('datapusher', 'upload')]
+    from credentials import site, API_key
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    resource = get_resource_by_id(resource_id)
+    extant_views = ckan.action.resource_view_list(id=resource_id)
+    title = 'Data Table'
+
+    if resource['url_type'] in ('datapusher', 'upload', 'datastore') and resource['datastore_active']:
+        if 'datatables_view' not in [v['view_type'] for v in extant_views]:
+            print(f"Adding view for {resource['name']}")
+            datatable_view = add_datatable_view(resource_id)[0]
+            # A view will be described like this:
+            #    {'col_reorder': False,
+            #    'description': '',
+            #    'export_buttons': False,
+            #    'filterable': True,
+            #    'fixed_columns': False,
+            #    'id': '3181357a-d130-460f-ac86-e54ae800f574',
+            #    'package_id': '812527ad-befc-4214-a4d3-e621d8230563',
+            #    'resource_id': '9fc62eb0-10b3-4e76-ba01-8883109a0693',
+            #    'responsive': False,
+            #    'title': 'Data Table',
+            #    'view_type': 'datatables_view'}
+            if 'id' in datatable_view.keys():
+                configure_datatable(datatable_view)
+            return datatable_view
+        else:
+            print("View of that name already exists.")
+    else:
+        ic(resource)
+        raise ValueError(f'Unable to add Data Table view.')
+
+
+
+    # [ ] Integrate previous attempt which avoids duplicating views with the same name:
+    #if title not in [v['title'] for v in extant_views]:
+    #    # CKAN's API can't accept nested JSON to enable the config parameter to be
+    #    # used to set export_buttons and col_reorder options.
+    #    # https://github.com/ckan/ckan/issues/2655
+    #    config_dict = {'export_buttons': True, 'col_reorder': True}
+    #    #result = ckan.action.resource_view_create(resource_id = resource_id, title="Data Table", view_type='datatables_view', config=json.dumps(config_dict))
+    #    result = ckan.action.resource_view_create(resource_id=resource_id, title="Data Table", view_type='datatables_view')
+
+def add_view(resource_id, view_type):
+    from credentials import site, API_key
+    BASE_URL = f'{site}/api/3/action/'
+    if view_type == 'datatables_view':
+        view = create_data_table_view(resource_id)
+    else:
+        raise ValuError(f'Still need to create code to add views like {view_type}')
+
+    return view
+
+def delete_datatable_views(resource_id):
+    from credentials import site, API_key
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    resource = get_resource_by_id(resource_id)
+    extant_views = ckan.action.resource_view_list(id=resource_id)
+    if len(extant_views) > 0:
+        if resource['format'].lower() == 'csv' and resource['url_type'] in ('datapusher', 'upload') and resource['datastore_active']:
+            if 'datatables_view' not in [v['view_type'] for v in extant_views]:
+                print(f"Unable to find a Data Table view to delete from {resource['name']}.")
+            else: # Delete all views in that resource
+                for view in extant_views:
+                    if view['view_type'] == 'datatables_view':
+                        print(f"Deleting the view with name {view['title']} and type {view['view_type']}.")
+                        ckan.action.resource_view_delete(id = view['id'])
+
+
+def reorder_views(site, resource_id, views):
+    BASE_URL = f'{site}/api/3/action/'
+    temp_view_list = [view_item['id'] for view_item in views if
+                      view_item['view_type'] not in ('datatables_view',)]
+
+    new_view_list = [datatable_view['id']] + temp_view_list
+    r = requests.post(BASE_URL + 'resource_view_reorder', json={'id': resource_id, 'order': new_view_list},
+                      headers={"Authorization": API_KEY}, verify=job.verify_requests)
+
+
+##### End of views operations #####
 ##### (Some) dataset-scale operations #####
 # get_package_parameter is defined above. #
 
