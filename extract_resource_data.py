@@ -30,7 +30,7 @@ def obtain_resource(site, r_id, API_key, filename=None):
         filename = "{}.csv".format(r_id)
 
     try:
-        list_of_dicts = get_all_records(site, r_id, API_key, chunk_size=5000)
+        list_of_dicts = get_all_records(site, r_id, API_key, chunk_size=20000)
         print("len(list_of_dicts) = {}".format(len(list_of_dicts)))
         fields = get_fields(site,r_id,API_key)
         print("len(fields) = {}".format(len(fields)))
