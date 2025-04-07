@@ -52,10 +52,20 @@ def guess_parameter_type(parameter, value, mode):
         return int(value)
     return value
 
+def dict_drill_down(d, list_of_keys):
+    import copy
+    sd = copy.deepcopy(d)
+    try:
+        for key in list_of_keys:
+            sd = sd[key]
+        return sd
+    except KeyError:
+        return None
+
 def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
     if mode == 'get':
         if ':' not in parameter:
-            return entity[parameter]
+            return entity.get(parameter, None)
         else: # Handle sub-parameters (for "extras")
             params = parameter.split(':')
             if len(params) == 2:
@@ -64,6 +74,14 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                     return get_value_from_extras(extras=first, key=params[1], default=None)
                 else:
                     raise ValueError(f'act_on_parameter is not yet designed to handle parameters like {parameter}')
+            elif len(params) > 2:
+                first = entity[params[0]]
+                if params[0] == "extras":
+                    subdict = get_value_from_extras(extras=first, key=params[1], default=None)
+                    return dict_drill_down(subdict, params[2:])
+                else:
+                    raise ValueError(f'act_on_parameter is not yet designed to handle parameters like {parameter}')
+
     elif mode == 'add':
         if entity_type == 'dataset':
             if parameter == 'groups':
@@ -260,7 +278,7 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
 # > multiplex.py (set|get) <parameter> <parameter value> --dataset (all|regex|package_id) --resource (all|regex|resource_id)
 parser = argparse.ArgumentParser(description='Select dataset packages/resources to set/get parameters on')
 parser.add_argument('mode', default='get', choices=['set', 'get', 'add', 'delete', 'add_view'], help='Either "set" or "get" or "add" (or "delete" for extras keys) or "add_view".')
-parser.add_argument('--parameter', dest='parameter', default=None, required=False, help='The parameter of interest (resource-level if the --resource parameter is given, else dataset-level). [Use "view_type" with add_view.]')
+parser.add_argument('--parameter', dest='parameter', default=None, required=False, help='The parameter of interest (resource-level if the --resource parameter is given, else dataset-level). Drill down through multiple dicts by separating keys with colons (e.g., "extras:etl_by_resource:3f50d47a-ab54-4da2-9f03-8519006e9fc9:job_code"). [Use "view_type" with add_view.]')
 parser.add_argument('--value', dest='parameter_value', required=False, help='The parameter value to set the parameter to (resource-level if the --resource parameter is given, else dataset-level)')
 parser.add_argument('--dataset', dest='dataset_selector', default=None, required=False, help='(all|<search term to match>|<package ID or name>)')
 parser.add_argument('--resource', dest='resource_selector', default=None, required=False, help='(all|<search term to match>|<resource ID>)')
