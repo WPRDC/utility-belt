@@ -927,7 +927,7 @@ def set_package_parameters_to_values(site,package_id,parameters,new_values,API_k
     for parameter,new_value in zip(parameters,new_values):
         payload[parameter] = new_value
     results = ckan.action.package_patch(**payload)
-    print(results)
+    #print(results)
     print("Changed the parameters {} from {} to {} on package {}".format(parameters, original_values, new_values, package_id))
     return results # Return the revised package dict.
 
@@ -1050,11 +1050,11 @@ def assign_package_to_group(site, package, package_id, group_name, API_key):
     return package
 ## End groups operations ##
 
-def add_tag(package, tag='_etl'): # Code from rocket... not yet used here.
+def add_tag(package, tag='_etl'): # Code from rocket...
     tag_dicts = package['tags']
     tags = [td['name'] for td in tag_dicts]
     if tag not in tags:
-        from engine.parameters.remote_parameters import site, API_key
+        from credentials import site, API_key
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
         new_tag_dict = {'name': tag}
         tag_dicts.append(new_tag_dict)
