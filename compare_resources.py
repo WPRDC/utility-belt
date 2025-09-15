@@ -64,6 +64,8 @@ def strip_fields_all_rows(records, fields_to_strip):
     return [strip_fields(x, fields_to_strip) for x in records]
 
 def compare_resources(site, resource_id_1, resource_id_2, fields_to_ignore, API_key):
+    # Are they big? If so, maybe just compare the first records. Or the lengths. Or the hashes (more computationally intensive).
+    # Could also compare the schemas, but the form that CKAN returns them in are objects that are not immediately comparable.
     ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
     from gadgets import get_number_of_rows, get_resource_data, get_all_records
     row_counts = [get_number_of_rows(site, r_id, API_key=API_key) for r_id in [resource_id_1, resource_id_2]]
@@ -77,17 +79,20 @@ def compare_resources(site, resource_id_1, resource_id_2, fields_to_ignore, API_
         print(f"The resources differ in the first row ({lines[0]} vs. {lines[1]}).")
         return False
 
-    lines = [json.dumps(strip_fields_all_rows(get_all_records(site, r_id, API_key), fields_to_ignore)) for r_id in [resource_id_1, resource_id_2]]
-    if lines[0] != lines[1]:
-        print(f"The resources differ somewhere in the data.")
-        return False
+    ok = False
+    if row_counts[0] < 1000:
+        ok = True
+    elif input(f'There are {row_counts[0]} rows. Are you sure you want to compare the entire tables by concatenating strings? (y/n)').lower() == 'y':
+        ok = True
+    if ok:
+        lines = [json.dumps(strip_fields_all_rows(get_all_records(site, r_id, API_key), fields_to_ignore)) for r_id in [resource_id_1, resource_id_2]]
+        if lines[0] != lines[1]:
+            print(f"The resources differ somewhere in the data.")
+            return False
+        else:
+            return True
     else:
-        return True
-
-    # Are they big? If so, maybe just compare the first records. Or the lengths. Or the hashes (more computationally intensive).
-    # Could also compare the schemas, but the form that CKAN returns them in are objects that are not immediately comparable.
-
-    get_all_records(site,resource_id,API_key=None,chunk_size=5000)
+        raise ValueError(f'Unable to compare tables yet. Try implementing hashing-based comparison.')
 
 
 if __name__ == '__main__':
