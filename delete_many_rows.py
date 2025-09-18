@@ -10,7 +10,7 @@ resource_id = "7e203d63-35a1-4ed9-90a5-6de70e406784" # Sample Parking Transactio
 resource_id = "d54200cc-3127-4dba-9080-3dcb7f66708c" # BigBurgh Events archive
 resource_id = "a540145a-0d1c-409c-80c7-c3707c2da0ff" # BigBurgh Services archive
 resource_id = "d836ce20-0c97-4976-bde3-d63fe1af6b81" # BigBurgh Safe Places archive
-;
+
 from credentials import site, API_key
 
 resource_name = get_resource_name(site, resource_id, API_key)
