@@ -254,8 +254,9 @@ def multi(mode, parameter, parameter_value, dataset_selector, resource_selector,
     elif resource_selector is not None and tag_selector is None:
         entity_type = 'resource'
 
-    if parameter is not None:
-        parameter_value = guess_parameter_type(parameter, parameter_value, mode)
+    if parameter_value is not None: # Since if a null value is specified at the command line, it will come through as the string 'None'.
+        if parameter is not None:
+            parameter_value = guess_parameter_type(parameter, parameter_value, mode)
 
     multiplex_with_functional_selection(mode, entity_type, parameter, parameter_value, dataset_filter, resource_filter)
 
