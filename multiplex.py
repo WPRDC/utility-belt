@@ -140,6 +140,15 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
         return parameter_value # Why are we returning this? Does it get changed somewhere?
 
     elif mode == 'delete':
+        if entity_type == 'resource':
+            p_name = get_package_parameter(site, entity['package_id'], parameter='title', API_key=API_key)
+            question = f"Delete resource with ID {entity['id']} and name '{entity['name']}' from the dataset called '{p_name}'?"
+            from gadgets import delete_resource, get_resource_name, query_yes_no
+            if query_yes_no(question, default="yes"):
+                rd = delete_resource(site, entity['id'], API_key)
+                print("Deleted!")
+            return
+
         if ':' not in parameter or parameter.split(':')[0] != 'extras':
             raise ValueError(f'Not programmed to handle deleting parameters like "{parameter}".')
         params = parameter.split(':')
@@ -182,11 +191,11 @@ def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_
         # Find all matching resources
             for resource in dataset['resources']:
                 if resource_filter(resource):
-                    if parameter is None:
+                    if parameter is not None or mode == 'delete':
+                        after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
+                    else:
                         pprint(resource)
                         after_param = resource
-                    else:
-                        after_param = act_on_parameter(resource, entity_type, mode, parameter, parameter_value)
                     collected.append({'parameter_val': after_param, 'resource': resource, 'name': resource['name'], 'id': resource['id']})
         else:
             assert entity_type in ['dataset', 'resource']
