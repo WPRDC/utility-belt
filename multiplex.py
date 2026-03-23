@@ -201,8 +201,20 @@ def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_
             assert entity_type in ['dataset', 'resource']
 
 
+    def type_size_str(x):
+        if type(x) is None:
+            return 'None'
+        if type(x) is str:
+            return 'str'
+        if type(x) is list:
+            return f'list ({len(x)})'
+        if type(x) is dict:
+            return f'dict ({len(x)})'
+
+        return f'{type(x)}'
+
     for c in sorted(collected, key=lambda d: d['name']):
-        print(f"{c['name']} ({c['id']}){'' if parameter is None else '[' + parameter + ']'}: {c['parameter_val']}")
+        print(f"{c['name']} ({c['id']}){'' if parameter is None else '[' + parameter + ']'}({type_size_str(c['parameter_val'])}): {c['parameter_val']}")
 
     print(f"{'Set' if mode == 'set' else 'Got'} parameters for {len(collected)} {entity_type}{'s' if len(collected) != 1 else ''}.")
     return collected
