@@ -132,6 +132,11 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                         package = assign_package_to_group(site, package, package_id, parameter_value, API_key)
                     new_values = get_package_parameter(site, package_id, parameter=parameter, API_key=API_key)
                     return new_values
+                elif parameter in ['title', 'frequency_publishing', 'frequency_data_change', 'data_steward_email', 'data_steward_name']:
+                    package = entity
+                    package_id = package['id']
+                    package = set_package_parameters_to_values(site, entity['id'], [parameter], [parameter_value], API_key)
+                    return package
                 else:
                     raise ValueError(f'act_on_parameter is not yet designed to set dataset parameters like {parameter}')
         else:
