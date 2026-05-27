@@ -218,8 +218,12 @@ def multiplex_with_functional_selection(mode, entity_type, parameter, parameter_
 
         return f'{type(x)}'
 
+    import os
+    terminal_width = os.get_terminal_size().columns
     for c in sorted(collected, key=lambda d: d['name']):
         print(f"{c['name']} ({c['id']}){'' if parameter is None else '[' + parameter + ']'}({type_size_str(c['parameter_val'])}): {c['parameter_val']}")
+        if parameter in ['extras']:
+            pprint(c['parameter_val'], width=terminal_width)
 
     print(f"{'Set' if mode == 'set' else 'Got'} parameters for {len(collected)} {entity_type}{'s' if len(collected) != 1 else ''}.")
     return collected
