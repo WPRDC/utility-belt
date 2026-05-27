@@ -132,6 +132,8 @@ def act_on_parameter(entity, entity_type, mode, parameter, parameter_value):
                         package = assign_package_to_group(site, package, package_id, parameter_value, API_key)
                     new_values = get_package_parameter(site, package_id, parameter=parameter, API_key=API_key)
                     return new_values
+                # If the 'extras' field is missing from a package, rather than trying to set 'extras' to [] (which
+                # didn't work when I coded and tried it), just "set --parameter extras:foo --value bar".
                 elif parameter in ['title', 'frequency_publishing', 'frequency_data_change', 'data_steward_email', 'data_steward_name']:
                     package = entity
                     package_id = package['id']
