@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/env python
+# NOTE that query-slinger is a good tool for downloading filtered versions of
+# CKAN tables.
 import sys, os
 from pprint import pprint
 import json
