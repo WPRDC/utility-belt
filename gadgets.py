@@ -222,6 +222,22 @@ def get_schema(site,resource_id,API_key=None):
 
     return schema
 
+# Show schema, field types, and index info - adapted
+# from https://github.com/OCHA-DAP/hdx-tabular-data-endpoints-notebook/blob/main/hdx_tabular_data_endpoints.ipynb
+def show_schema(resource_id, label):
+    from credentials import site, API_key
+    ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
+    result = ckan.action.datastore_info(resource_id=resource_id, include_meta=True, include_fields_schema=True)
+
+    fields = result.get("fields", []) or []
+
+    print(f"{label} schema ({len(fields)} fields):")
+    for field in fields:
+        schema = field['schema']
+        print(f'{field["id"]} ({field['type']}) {"INDEX" if schema["is_index"] else ""} {"PRIMARY KEY" if schema["uniquekey"] else ""} {"NOT NULL" if schema["notnull"] else ""}')
+
+    print("But for some reason, datastore_info doesn't identify fields that rocket-etl designates as primary keys as actual primary keys. It just indexes them.")
+
 def get_metadata(site,resource_id,API_key=None):
     try:
         ckan = ckanapi.RemoteCKAN(site, apikey=API_key)
